@@ -11,9 +11,8 @@ class Account(models.Model):
     type = models.CharField(max_length=200, default=None)
     owner = models.CharField(max_length=200, default=None)
     balance = models.IntegerField(default=0)
-    bank = models.CharField(max_length=200, default='UCU')
+    bank = models.CharField(max_length=200, default='UCU', null=True)
     routing_number = models.IntegerField(null=True)
-    isInGoodStanding = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.id)

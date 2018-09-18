@@ -5,8 +5,11 @@ from .models import Account
 
 class AccountAdmin(admin.ModelAdmin):
     model = Account
+
     fields = ('type','balance', 'bank')  # what admin can change
-    list_display = ['type', 'owner']  # what is displayed in the admin/accounts/account page
+
+    # what is displayed in the admin/accounts/account page
+    list_display = ['type', 'owner', 'balance', 'bank', 'routing_number']
 
 
 admin.site.register(Account, AccountAdmin)
