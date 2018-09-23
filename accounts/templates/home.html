@@ -1,0 +1,21 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Accounts Home
+{% endblock %}
+
+{% block content %}
+    <a href={% url 'accounts:create' %}>Create an account with Django Forms</a> <br>
+    <a href={% url 'accounts:create_raw' %}>Create an account with raw HTML</a> <br>
+
+{#  Custom drop down menu form  #}
+{#    <form method="get">#}
+{#        <select>#}
+{#            <option value="checking">Checking</option>#}
+{#            <option value="savings">Savings</option>#}
+{#        </select>#}
+{#        <input type="submit">#}
+{#    </form>#}
+
+{% endblock %}

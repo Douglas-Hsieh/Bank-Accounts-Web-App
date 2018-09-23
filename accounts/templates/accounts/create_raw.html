@@ -1,0 +1,26 @@
+{% extends 'home.html' %}
+
+{% block title %}
+    Create Account (raw HTML form)
+{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        Account Type:
+        <select name="type">
+            <option value="Checking">Checking</option>
+            <option value="Savings">Savings</option>
+        </select> <br>
+        Account Owner's Name:
+        <input type="text" name="owner" value="Your Name"> <br>
+        Bank:
+        <select name="bank">
+            <option value="UCU">UCU</option>
+            <option value="Chase">Chase</option>
+        </select> <br>
+        Routing Number:
+        <input name="routing_number" type="number"> <br>
+        <input type="submit">
+    </form>
+{% endblock %}
