@@ -6,7 +6,7 @@ from .models import Account
 class AccountAdmin(admin.ModelAdmin):
     model = Account
 
-    fields = ('type','balance', 'bank')  # what admin can change
+    fields = ('type','owner', 'balance', 'bank', 'routing_number')  # what admin can change
 
     # what is displayed in the admin/accounts/account page
     list_display = ['type', 'owner', 'balance', 'bank', 'routing_number']
