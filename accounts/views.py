@@ -53,13 +53,11 @@ def account_create_view(request):
     return render(request, 'accounts/create.html', context)
 
 
-# TODO: Create a generic class view for account creation
 class AccountCreateView(CreateView):  # CreateView is generic view for creating models with forms
     model = Account  # Model we're creating
     form_class = AccountForm  # Django Form class we're using
     template_name = 'accounts/create.html'
     success_url = '/accounts/create'  # Upon a successful form submission
-
 
 
 
