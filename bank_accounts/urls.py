@@ -8,11 +8,11 @@ Class-based views
 """
 
 from django.urls import path
-from accounts.views import home_view, account_create_raw_view, AccountCreateView
+from bank_accounts.views import home_view, account_create_raw_view, AccountCreateView
 
-app_name = 'accounts'
+app_name = 'bank_accounts'
 urlpatterns = [
     path('', home_view, name='home'),
     path('create/', AccountCreateView.as_view(), name='create'),
-    path('create_raw/', account_create_raw_view, name='create_raw')
+    path('create_raw/', account_create_raw_view, name='create_raw'),
 ]

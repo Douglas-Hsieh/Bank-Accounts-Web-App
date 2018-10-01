@@ -1,0 +1,10 @@
+{# Without this template, Django will use the admin logged out template #}
+
+{% extends 'base.html' %}
+{% block title %}
+    Logged Out
+{% endblock %}
+{% block content %}
+    <p>You've been logged out</p>
+    <p><a href="{% url 'login' %}">Click here to log back in!</a></p>
+{% endblock %}

@@ -12,7 +12,8 @@ class AccountForm(forms.ModelForm):  # a form associated with the database (via 
         model = Account  # Database table this form is associated with
         fields = [  # Fields that this form will have. These fields are associated with the model fields.
             'type',
-            'owner',
+            'creator',
+            'holder',
             'balance',
             'bank',
             'routing_number',

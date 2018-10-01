@@ -1,10 +1,13 @@
-from django.db import models
+from django.db import models  # Python objects that map to the database
+from django.contrib.auth.models import User  # User models from Django Auth
 
 # Create your models here.
 
 # Attributes:
 # blank=True/False specifies whether it will render as required or not
-# null=True/False means the object can be null or empty in the DATABASE
+# null=True means the database table column may contain null values
+# null=False means the database table column may not contain null values
+# on_delete=model.SET_NULL means when the model instance is deleted, we will implement this by setting the field to Null
 
 # Choices:
 # Create choices inside Model classes when you need the user to select static choices
@@ -31,7 +34,9 @@ class Account(models.Model):
     )
 
     type = models.CharField(max_length=200, default=None, choices=TYPE_CHOICES)
-    owner = models.CharField(max_length=200, default=None)
+    creator = models.CharField(max_length=200, default=None)  # Account creator
+    # holder = models.CharField(max_length=200, default=None)  # Account holder
+    holder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     balance = models.IntegerField(default=0)
     bank = models.CharField(max_length=200, default='UCU', null=True, choices=BANK_CHOICES)
     routing_number = models.IntegerField(null=True)

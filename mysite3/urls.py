@@ -18,5 +18,9 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('accounts.urls'))
+    path('bank_accounts/', include('bank_accounts.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),
 ]
+
+# TODO Optional: Implement an accounts/profile page, which requires us to add a path to django.contrib.auth.urls
+

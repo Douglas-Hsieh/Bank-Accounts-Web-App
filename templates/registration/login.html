@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Login
+{% endblock %}
+
+{% block content %}
+
+    {% if form.errors %}
+        <p>Your username and password did not match. Please try again.</p>
+    {% endif %}
+
+    {# If we are redirected to the login page while we are logged in, that means that we don't have sufficient permissions #}
+    {% if next %}
+        {% if user.is_authenticated %}
+            <p>Your account doesn't have access to see this page. To proceed, please login with an account with access</p>
+        {% else %}
+            <p>Please login to see this page.</p>
+        {% endif %}
+    {% endif %}
+
+    {# Manually creating a HTML form using template tags provided by the login view of the auth app #}
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div>{{ form.username.label_tag }}</div>
+        <div>{{ form.username }}</div>
+        <div>{{ form.password.label_tag }}</div>
+        <div>{{ form.password }}</div>
+        <input type="submit" value="login">
+        <input type="hidden" name="next" value="{{ next }}">
+    </form>
+
+    {# Easy way #}
+
+    {#{% block content %}#}
+    {#    <form method="post">#}
+    {#        {% csrf_token %}#}
+    {#        {{ form.as_p }}#}
+    {#        <input type="submit">#}
+    {#    </form>#}
+    {#{% endblock %}#}
+
+    <p><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
+
+{% endblock %}

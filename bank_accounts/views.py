@@ -6,6 +6,15 @@ from .models import Account
 from .forms import AccountForm
 from django.views.generic import CreateView
 
+# Authentication
+
+from django.contrib.auth.decorators import login_required  # Use for function based views
+# @login_required
+# def my_view(request):
+
+from django.contrib.auth.mixins import LoginRequiredMixin  # Use for class based views
+# class MyView(LoginRequiredMixin, View):
+
 
 def home_view(request):
     return render(request, 'home.html')
@@ -33,7 +42,7 @@ def account_create_raw_view(request):
                                routing_number=account_routing_number)
 
     # Return an empty form
-    return render(request, 'accounts/create_raw.html')
+    return render(request, 'bank_accounts/create_raw.html')
 
 
 # Uses Django's form.ModelForm to handle form processing
@@ -50,14 +59,14 @@ def account_create_view(request):
     }
 
     # Using the information of this HTTP request, send a resource (such as a template) with context
-    return render(request, 'accounts/create.html', context)
+    return render(request, 'bank_accounts/create.html', context)
 
 
 class AccountCreateView(CreateView):  # CreateView is generic view for creating models with forms
     model = Account  # Model we're creating
     form_class = AccountForm  # Django Form class we're using
-    template_name = 'accounts/create.html'
-    success_url = '/accounts/create'  # Upon a successful form submission
+    template_name = 'bank_accounts/create.html'
+    success_url = '/bank_accounts/create'  # Upon a successful form submission
 
 
 
