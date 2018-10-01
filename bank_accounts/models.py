@@ -35,8 +35,7 @@ class Account(models.Model):
 
     type = models.CharField(max_length=200, default=None, choices=TYPE_CHOICES)
     creator = models.CharField(max_length=200, default=None)  # Account creator
-    # holder = models.CharField(max_length=200, default=None)  # Account holder
-    holder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    holder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # Account holder is a site user
     balance = models.IntegerField(default=0)
     bank = models.CharField(max_length=200, default='UCU', null=True, choices=BANK_CHOICES)
     routing_number = models.IntegerField(null=True)

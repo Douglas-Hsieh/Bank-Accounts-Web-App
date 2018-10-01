@@ -15,11 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from bank_accounts.views import UserCreateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('bank_accounts/', include('bank_accounts.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('signup', UserCreateView.as_view(), name='signup'),
 ]
 
 # TODO Optional: Implement an accounts/profile page, which requires us to add a path to django.contrib.auth.urls

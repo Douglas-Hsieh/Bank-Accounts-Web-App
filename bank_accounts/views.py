@@ -5,6 +5,7 @@ from django.shortcuts import render
 from .models import Account
 from .forms import AccountForm
 from django.views.generic import CreateView
+from django.contrib.auth.forms import UserCreationForm
 
 # Authentication
 
@@ -67,6 +68,12 @@ class AccountCreateView(CreateView):  # CreateView is generic view for creating 
     form_class = AccountForm  # Django Form class we're using
     template_name = 'bank_accounts/create.html'
     success_url = '/bank_accounts/create'  # Upon a successful form submission
+
+
+class UserCreateView(CreateView):  # CreateView indicates creation of object in database (using forms)
+    form_class = UserCreationForm  # Format of the form
+    template_name = 'registration/signup.html'  # Template that uses the form to display user interface
+    success_url = 'accounts/login'
 
 
 
