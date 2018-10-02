@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    List of Accounts
+{% endblock %}
+
+{% block content %}
+    <h1>List of Accounts held by {{ request.user.username }}</h1>
+    {% for account in account_list %}
+        {# {% url 'app_name:URL_name URL arguments' %} #}
+        <p>Account ID: <a href="{% url 'bank_accounts:account_detail' account.id %}">{{ account.id }}</a></p>
+    {% endfor %}
+{% endblock %}

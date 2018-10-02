@@ -5,8 +5,13 @@
     <title>{% block title %}untitled{% endblock %}</title>
 </head>
 <body>
-
 <ul class="sidebar-nav">
+
+    {% if user.is_authenticated %}
+        {# Inform the user who they are #}
+        <p>Logged in as: {{ user.username }}</p>
+    {% endif %}
+
     <p><a href="/bank_accounts">Home</a></p>
 
     {% if user.is_authenticated %}

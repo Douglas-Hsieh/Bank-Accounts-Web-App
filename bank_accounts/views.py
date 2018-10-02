@@ -4,7 +4,7 @@ from django.shortcuts import render
 
 from .models import Account
 from .forms import AccountForm
-from django.views.generic import CreateView
+from django.views.generic import CreateView, ListView, DetailView
 from django.contrib.auth.forms import UserCreationForm
 
 # Authentication
@@ -76,4 +76,26 @@ class UserCreateView(CreateView):  # CreateView indicates creation of object in 
     success_url = 'accounts/login'
 
 
+# TODO: Let users be able to view their own accounts
+
+
+class AccountListView(ListView):
+    template_name = 'bank_accounts/account_list.html'
+    model = Account
+    context_object_name = 'account_list'
+
+    def get_queryset(self):  # Get the list of model instances we can display
+        return Account.objects.filter(holder=self.request.user)
+
+
+# TODO: If a user has permission, he can view his account
+
+# DetailView expects an ID (from URL parameter) associated to the model instance
+class AccountDetailView(DetailView):
+    template_name = 'bank_accounts/account_detail.html'
+    model = Account
+    context_object_name = 'account'
+
+    # def get_queryset(self):  # Get list of model instances used as context
+    #     return Account.objects.get(holder=self.request.user)  # User can access his own accounts
 

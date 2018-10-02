@@ -7,7 +7,7 @@ Accounts Home
 {% block content %}
     <p><a href={% url 'bank_accounts:create' %}>Create a bank account with Django Forms (you may do this if you already have a site account)</a></p>
     <p><a href={% url 'signup' %}>Create a site account (Do this if you are a new user)</a></p>
-
+    <p><a href="{% url 'bank_accounts:account_list' %}">View your list of bank accounts</a></p>
 
 {#    <a href={% url 'bank_accounts:create_raw' %}>Create an account with raw HTML</a> <br>#}
 {#  Custom drop down menu form  #}

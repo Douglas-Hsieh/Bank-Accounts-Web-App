@@ -1,0 +1,19 @@
+{# gerg #}
+
+{% extends 'base.html' %}
+
+{% block title %}
+
+{% endblock %}
+
+{% block content %}
+
+    {# Display account details #}
+    <p>Account ID: {{ account.id }}</p>
+    <p>Creator: {{ account.creator }}</p>
+    <p>Holder: {{ account.holder }}</p>
+    <p>Balance: ${{ account.balance }}</p>
+    <p>Bank: {{ account.bank }}</p>
+    <p>Routing Number {{ account.routing_number }}</p>
+
+{% endblock %}
