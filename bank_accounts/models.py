@@ -19,7 +19,7 @@ class Account(models.Model):
 
     CHECKING = "Checking"
     SAVINGS = "Savings"
-    TYPE_CHOICES = (
+    ACCOUNT_TYPE_CHOICES = (
         (CHECKING, 'Checking'),  # Each inner tuple is of form: (value to be set in model, human readable name)
         (SAVINGS, 'Savings'),
     )
@@ -33,7 +33,7 @@ class Account(models.Model):
         (WELLS_FARGO, 'Wells Fargo'),
     )
 
-    type = models.CharField(max_length=200, default=None, choices=TYPE_CHOICES)
+    account_type = models.CharField(max_length=200, default=None, choices=ACCOUNT_TYPE_CHOICES)
     creator = models.CharField(max_length=200, default=None)  # Account creator
     holder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # Account holder is a site user
     balance = models.IntegerField(default=0)

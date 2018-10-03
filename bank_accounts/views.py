@@ -6,6 +6,7 @@ from .models import Account
 from .forms import AccountForm
 from django.views.generic import CreateView, ListView, DetailView
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 # Authentication
 
@@ -76,10 +77,9 @@ class UserCreateView(CreateView):  # CreateView indicates creation of object in 
     success_url = 'accounts/login'
 
 
-# TODO: Let users be able to view their own accounts
-
-
-class AccountListView(ListView):
+# Authenticated Users may view Accounts they hold
+# If User is not authenticated, then we URL redirect to login (default is auth login view)
+class AccountListView(LoginRequiredMixin, ListView):
     template_name = 'bank_accounts/account_list.html'
     model = Account
     context_object_name = 'account_list'
@@ -91,7 +91,11 @@ class AccountListView(ListView):
 # TODO: If a user has permission, he can view his account
 
 # DetailView expects an ID (from URL parameter) associated to the model instance
-class AccountDetailView(DetailView):
+# LoginMixin ensures only authenticated Users may call the view
+
+# TODO: Only authenticated Users may view Account details
+# TODO: An Account may only be viewed by an User if the User is the Account's holder
+class AccountDetailView(LoginRequiredMixin, DetailView):
     template_name = 'bank_accounts/account_detail.html'
     model = Account
     context_object_name = 'account'

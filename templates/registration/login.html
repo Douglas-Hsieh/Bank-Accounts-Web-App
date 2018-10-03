@@ -10,10 +10,12 @@
         <p>Your username and password did not match. Please try again.</p>
     {% endif %}
 
-    {# If we are redirected to the login page while we are logged in, that means that we don't have sufficient permissions #}
+    {# User wants to access URL next, but needs to login first #}
     {% if next %}
+        {# User is logged in but doesn't have sufficient permissions #}
         {% if user.is_authenticated %}
             <p>Your account doesn't have access to see this page. To proceed, please login with an account with access</p>
+        {# User is not logged in #}
         {% else %}
             <p>Please login to see this page.</p>
         {% endif %}
