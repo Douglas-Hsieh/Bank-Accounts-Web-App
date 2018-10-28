@@ -5,9 +5,11 @@ from django.shortcuts import render, reverse
 from .models import Account
 from .forms import AccountForm
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, Http404
-from django.views.generic import CreateView, ListView, DetailView
+from django.views.generic import CreateView, ListView, DetailView, UpdateView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
+from django.shortcuts import redirect
 
 # Authentication (i.e. Checking if a client is also a User)
 
@@ -71,7 +73,22 @@ class AccountCreateView(CreateView):  # CreateView is generic view for creating 
     model = Account  # Model we're creating
     form_class = AccountForm  # Django Form class we're using
     template_name = 'bank_accounts/create.html'
-    success_url = '/bank_accounts/create'  # Upon a successful form submission
+    # The URL that handles forms typically also displays the form
+    success_url = '/bank_accounts/create'  # URL to redirect after user successfully submits form.
+
+
+class AccountUpdateView(UpdateView):  # Update Account database objects
+    model = Account
+    fields = ['account_type']
+    template_name = 'bank_accounts/update.html'
+    # pk_url_kwarg = 'pk'  # The name of the URLConfig keyword argument that contains the primary key.
+
+    def form_valid(self, form):  # called when User submits valid form
+        account = form.save(commit=False)
+        account.updated_by = self.request.user
+        account.updated_at = timezone.now()
+        account.save()
+        return redirect(to=reverse('bank_accounts:account_detail', kwargs={'pk': account.pk}))
 
 
 class UserCreateView(CreateView):  # CreateView indicates creation of object in database (using forms)
@@ -95,7 +112,6 @@ class AccountListView(LoginRequiredMixin, ListView):
 # LoginMixin ensures only authenticated Users may call the view
 
 
-# TODO: Only Authenticated, Account holders may view an Account's details
 # Custom account detail view that enforces: Only Authenticated, Account holders may view an Account's details
 @login_required
 def account_detail_view(request, pk):
@@ -124,3 +140,5 @@ def account_detail_view(request, pk):
 
     # def get_queryset(self):  # Get list of model instances used as context
     #     return Account.objects.get(holder=self.request.user)  # User can access his own accounts
+
+

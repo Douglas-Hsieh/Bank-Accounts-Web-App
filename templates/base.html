@@ -5,25 +5,25 @@
     <title>{% block title %}untitled{% endblock %}</title>
 </head>
 <body>
-<ul class="sidebar-nav">
 
-    {% if user.is_authenticated %}
-        {# Inform the user who they are #}
-        <p>Logged in as: {{ user.username }}</p>
+    <ul class="sidebar-nav">
+        {% if user.is_authenticated %}
+            {# Inform the user who they are #}
+            <p>Logged in as: {{ user.username }}</p>
+        {% endif %}
+
+        <p><a href="/bank_accounts">Home</a></p>
+
+        {% if user.is_authenticated %}
+            {# User may logout #}
+            {# The current URL is the argument for next, which is the URL that the login/logout page will redirect to #}
+            <p><a href="{% url 'logout' %}?next={{ request.path }}">Logout</a></p>
+        {% else %}
+            {# User may login #}
+            <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a></p>
     {% endif %}
+    </ul>
 
-    <p><a href="/bank_accounts">Home</a></p>
-
-    {% if user.is_authenticated %}
-        {# User may logout #}
-        {# The current URL is the argument for next, which is the URL that the login/logout page will redirect to #}
-        <p><a href="{% url 'logout' %}?next={{ request.path }}">Logout</a></p>
-    {% else %}
-        {# User may login #}
-        <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a></p>
-{% endif %}
-</ul>
-
-{% block content %}No content{% endblock %}
+    {% block content %}No content{% endblock %}
 </body>
 </html>

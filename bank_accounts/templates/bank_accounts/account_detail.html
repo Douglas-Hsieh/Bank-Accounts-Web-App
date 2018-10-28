@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block content %}
+    <p><a href="{% url 'bank_accounts:update' account.id  %}">Edit this Account</a></p>
 
     {# Display account details #}
     <p>Account ID: {{ account.id }}</p>
@@ -16,5 +17,7 @@
     <p>Balance: ${{ account.balance }}</p>
     <p>Bank: {{ account.bank }}</p>
     <p>Routing Number: {{ account.routing_number }}</p>
+
+    {# User can update account details #}
 
 {% endblock %}

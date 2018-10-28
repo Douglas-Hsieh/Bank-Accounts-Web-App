@@ -8,8 +8,7 @@ from django.contrib.auth.models import User
 
 # Create your tests here.
 
-# TODO: User authentication with bank_accounts. Implement users being able to access only bank_accounts they've created.
-    # TODO: Implement Users being able to claim accounts (ForeignKey on Accounts tied to Users)
+# TODO: Implement Users being able to claim accounts (ForeignKey on Accounts tied to Users)
 # TODO: Emailing users password resets.
 
 
@@ -43,6 +42,29 @@ class AccountListViewTests(TestCase):
             response=response,
             expected_url='%s?next=%s' % (reverse('login'), request_url)
         )
+
+    def test_not_authorized(self):
+        """
+        If a user doesn't hold an Account, it will not be listed to him.
+        :return:
+        """
+        # Create users
+        user_1 = create_user('user_1', '12345')
+        user_2 = create_user('user_2', '12345')
+
+        # Create an Account for a User
+        account_1 = create_account(account_type=Account.CHECKING, creator=user_1, holder=user_1, balance=0,
+                                   bank=Account.WELLS_FARGO, routing_number=123456789)
+
+        # User login and view their account list
+        self.client.login(username='user_2', password='12345')
+        response = self.client.get(reverse('bank_accounts:account_list'))
+
+        # Test if an Account is displayed to a User who doesn't hold it.
+        self.assertEqual(response.status_code, 200)  # User accessed account list page OK
+        self.assertNotEqual(user_2, account_1.holder)  # User doesn't hold Account
+        # User doesn't see the Account of a another User on his account list
+        self.assertNotContains(response, reverse('bank_accounts:account_detail', kwargs={'pk': account_1.pk}))
 
     def test_no_accounts(self):
         """
@@ -79,34 +101,29 @@ class AccountListViewTests(TestCase):
         self.assertQuerysetEqual(response.context['account_list'], ['<Account: 1>', '<Account: 2>'], ordered=False)
 
 
-    def test_account_not_held_by_user(self):
-        """
-        If a user doesn't hold an Account, it will not be listed to him.
-        :return:
-        """
-        # Create users
-        user_1 = create_user('user_1', '12345')
-        user_2 = create_user('user_2', '12345')
-
-        # Create an Account for a User
-        account_1 = create_account(account_type=Account.CHECKING, creator=user_1, holder=user_1, balance=0,
-                                   bank=Account.WELLS_FARGO, routing_number=123456789)
-
-        # User login and view their account list
-        self.client.login(username='user_2', password='12345')
-        response = self.client.get(reverse('bank_accounts:account_list'))
-
-        # Test if an Account is displayed to a User who doesn't hold it.
-        self.assertEqual(response.status_code, 200)  # User accessed account list page OK
-        self.assertNotEqual(user_2, account_1.holder)  # User doesn't hold Account
-        # User doesn't see the Account of a another User on his account list
-        self.assertNotContains(response, reverse('bank_accounts:account_detail', kwargs={'pk': account_1.pk}))
-
-
-# TODO: AccountDetailViewTests
-
 class AccountDetailViewTests(TestCase):
-    def test_account_not_held_by_user(self):
+    def test_not_authenticated(self):
+        """
+            If user is not authenticated, he is redirected to login. After login, he can come back.
+            :return:
+        """
+        # Create User
+        user = create_user(username='username', password='password')
+        # Create Account
+        account = create_account(account_type=Account.CHECKING, creator=user, holder=user, balance=0,
+                                 bank=Account.WELLS_FARGO, routing_number=123456789)
+        # Connect to Account Detail
+        request_url = reverse('bank_accounts:account_detail', kwargs={"pk": account.pk})
+        response = self.client.get(request_url)
+
+        # User is redirected to login, then come back.
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(
+            response=response,
+            expected_url='%s?next=%s' % (reverse('login'), request_url)
+        )
+
+    def test_not_authorized(self):
         """
         If User doesn't hold this Account, then User cannot view Account details.
         :return:
