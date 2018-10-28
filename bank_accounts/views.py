@@ -1,14 +1,17 @@
-from django.shortcuts import render
+from django.shortcuts import render, reverse
 
 # Create your views here.
 
 from .models import Account
 from .forms import AccountForm
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, Http404
 from django.views.generic import CreateView, ListView, DetailView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-# Authentication
+# Authentication (i.e. Checking if a client is also a User)
+
+# We can bind the ability to access a view to the authentication of a User
 
 from django.contrib.auth.decorators import login_required  # Use for function based views
 # @login_required
@@ -88,18 +91,36 @@ class AccountListView(LoginRequiredMixin, ListView):
         return Account.objects.filter(holder=self.request.user)
 
 
-# TODO: If a user has permission, he can view his account
-
 # DetailView expects an ID (from URL parameter) associated to the model instance
 # LoginMixin ensures only authenticated Users may call the view
 
-# TODO: Only authenticated Users may view Account details
-# TODO: An Account may only be viewed by an User if the User is the Account's holder
-class AccountDetailView(LoginRequiredMixin, DetailView):
-    template_name = 'bank_accounts/account_detail.html'
-    model = Account
-    context_object_name = 'account'
+
+# TODO: Only Authenticated, Account holders may view an Account's details
+# Custom account detail view that enforces: Only Authenticated, Account holders may view an Account's details
+@login_required
+def account_detail_view(request, pk):
+    # Access the account we want to detail
+    try:
+        account = Account.objects.get(pk=pk)
+    except Account.DoesNotExist:  # Model class supports DNE exceptions
+        raise Http404()
+
+    context = {
+        "account": account
+    }
+
+    # If User holds the Account, User may view Account details
+    if request.user == account.holder:
+        return render(request=request, template_name='bank_accounts/account_detail.html', context=context)
+    # Else User is not Authorized to view resource
+    else:
+        return HttpResponseForbidden()
+
+
+# class AccountDetailView(LoginRequiredMixin, DetailView):
+#     template_name = 'bank_accounts/account_detail.html'
+#     model = Account
+#     context_object_name = 'account'
 
     # def get_queryset(self):  # Get list of model instances used as context
     #     return Account.objects.get(holder=self.request.user)  # User can access his own accounts
-

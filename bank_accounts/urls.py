@@ -8,8 +8,8 @@ Class-based views
 """
 
 from django.urls import path
-from bank_accounts.views import home_view, account_create_raw_view, AccountCreateView, AccountListView, \
-    AccountDetailView
+from bank_accounts.views import home_view, account_create_raw_view, AccountCreateView, AccountListView,\
+    account_detail_view
 
 app_name = 'bank_accounts'
 urlpatterns = [
@@ -19,5 +19,6 @@ urlpatterns = [
     path('user_account_list', AccountListView.as_view(), name='account_list'),
 
     # DetailView expects a URL argument to determine the model to detail
-    path('<int:pk>/user_account_detail', AccountDetailView.as_view(), name='account_detail'),
+    # path('<int:pk>/user_account_detail', AccountDetailView.as_view(), name='account_detail'),
+    path('<int:pk>/user_account_detail', account_detail_view, name='account_detail'),
 ]

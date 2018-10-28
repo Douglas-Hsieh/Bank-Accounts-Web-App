@@ -50,7 +50,7 @@ class AccountListViewTests(TestCase):
         :return:
         """
         # Create a User and login
-        create_user()
+        new_user = create_user('new_user', '12345')
         self.client.login(username='new_user', password='12345')  # login as a User
         response = self.client.get(reverse('bank_accounts:account_list'))  # Access the view
 
@@ -63,7 +63,7 @@ class AccountListViewTests(TestCase):
         :return:
         """
         # Create a User
-        new_user = create_user()
+        new_user = create_user('new_user', '12345')
         # Create two Accounts held by the User
         create_account(account_type=Account.CHECKING, creator='Creator 1', holder=new_user, balance=100,
                        bank=Account.CHASE, routing_number=123456789)
@@ -79,13 +79,64 @@ class AccountListViewTests(TestCase):
         self.assertQuerysetEqual(response.context['account_list'], ['<Account: 1>', '<Account: 2>'], ordered=False)
 
 
+    def test_account_not_held_by_user(self):
+        """
+        If a user doesn't hold an Account, it will not be listed to him.
+        :return:
+        """
+        # Create users
+        user_1 = create_user('user_1', '12345')
+        user_2 = create_user('user_2', '12345')
+
+        # Create an Account for a User
+        account_1 = create_account(account_type=Account.CHECKING, creator=user_1, holder=user_1, balance=0,
+                                   bank=Account.WELLS_FARGO, routing_number=123456789)
+
+        # User login and view their account list
+        self.client.login(username='user_2', password='12345')
+        response = self.client.get(reverse('bank_accounts:account_list'))
+
+        # Test if an Account is displayed to a User who doesn't hold it.
+        self.assertEqual(response.status_code, 200)  # User accessed account list page OK
+        self.assertNotEqual(user_2, account_1.holder)  # User doesn't hold Account
+        # User doesn't see the Account of a another User on his account list
+        self.assertNotContains(response, reverse('bank_accounts:account_detail', kwargs={'pk': account_1.pk}))
+
+
+# TODO: AccountDetailViewTests
+
 class AccountDetailViewTests(TestCase):
-    pass
+    def test_account_not_held_by_user(self):
+        """
+        If User doesn't hold this Account, then User cannot view Account details.
+        :return:
+        """
+        # Create users
+        user_1 = create_user('user_1', '12345')
+        user_2 = create_user('user_2', '12345')
+
+        # Create an Account for a User
+        account_1 = create_account(account_type=Account.CHECKING, creator=user_1, holder=user_1, balance=0,
+                                   bank=Account.WELLS_FARGO, routing_number=123456789)
+
+        # User logins
+        self.client.login(username='user_2', password='12345')
+        # User attempts to view account detail of an Account he doesn't hold
+        response = self.client.get(reverse('bank_accounts:account_detail',
+                                           kwargs={'pk': account_1.pk})
+                                   )
+
+        # Implementation #1: User is forbidden to access the page
+        self.assertEqual(response.status_code, 403)  # Forbidden
+
+        # Implementation #2: User is redirected to login page
+        # self.assertEqual(response.status_code, 200)  # OK
+        # self.assertRedirects(response, reverse('login'), 200)  # Successfully redirected to login page
 
 
-def create_user():
-    new_user = User.objects.create(username='new_user')
-    new_user.set_password('12345')
+def create_user(username, password):
+    new_user = User.objects.create(username=username)
+    new_user.set_password(password)
     new_user.save()
     return new_user
 
@@ -103,7 +154,3 @@ def create_account(account_type, creator, holder, balance, bank, routing_number)
     """
     return Account.objects.create(account_type=account_type, creator=creator, holder=holder, balance=balance, bank=bank,
                                   routing_number=routing_number)
-
-
-
-
