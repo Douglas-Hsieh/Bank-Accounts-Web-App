@@ -1,14 +1,16 @@
-from django.shortcuts import render, reverse
+from django.shortcuts import render, reverse, redirect
+from django.utils import timezone
 
 # Create your views here.
 
 from .models import Account
+
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, Http404
-from django.views.generic import CreateView, ListView, DetailView, UpdateView
+
+from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
+
 from .forms import AccountForm, AccountUpdateForm
 from django.contrib.auth.forms import UserCreationForm
-from django.utils import timezone
-from django.shortcuts import redirect
 
 # Authentication (i.e. Checking if a client is also a User)
 
@@ -18,7 +20,7 @@ from django.contrib.auth.decorators import login_required  # Use for function ba
 # @login_required
 # def my_view(request):
 
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin  # Use for class based views
+from django.contrib.auth.mixins import LoginRequiredMixin  # Use for class based views
 # class MyView(LoginRequiredMixin, View):
 
 
@@ -26,30 +28,18 @@ def home_view(request):
     return render(request, 'home.html')
 
 
-# Uses raw html instead of Django to implement forms in the template
-def account_create_raw_view(request):
+class UserCreateView(CreateView):  # CreateView indicates creation of object in database (using forms)
+    form_class = UserCreationForm  # Format of the form
+    template_name = 'registration/signup.html'  # Template that uses the form to display user interface
+    success_url = 'accounts/login'
 
-    """
-    Similar to account_create_view, but implemented without Django forms. Unsafe, as it doesn't perform form validation.
-    :param request:
-    :return:
-    """
-    # If the form has been filled out
-    if request.method == 'POST':
-        # The form describes the properties of the new account.
-        account_type = request.POST.get('type')
-        account_owner = request.POST.get('owner')
-        account_balance = 0
-        account_bank = request.POST.get('bank')
-        account_routing_number = request.POST.get('routing_number')
 
-        # Save the account onto the database.
-        Account.objects.create(type=account_type, owner=account_owner, balance=account_balance, bank=account_bank,
-                               routing_number=account_routing_number)
-
-    # Return an empty form
-    return render(request, 'bank_accounts/create_raw.html')
-
+class AccountCreateView(LoginRequiredMixin, CreateView):  # CreateView is generic view for creating models with forms
+    model = Account  # Model we're creating
+    form_class = AccountForm  # Django Form class we're using
+    template_name = 'bank_accounts/create.html'
+    # The URL that handles forms typically also displays the form
+    success_url = '/bank_accounts/create'  # URL to redirect after user successfully submits form.
 
 # Uses Django's form.ModelForm to handle form processing
 # def account_create_view(request):
@@ -67,32 +57,31 @@ def account_create_raw_view(request):
 #     # Using the information of this HTTP request, send a resource (such as a template) with context
 #     return render(request, 'bank_accounts/create.html', context)
 
-class AccountCreateView(LoginRequiredMixin, CreateView):  # CreateView is generic view for creating models with forms
-    model = Account  # Model we're creating
-    form_class = AccountForm  # Django Form class we're using
-    template_name = 'bank_accounts/create.html'
-    # The URL that handles forms typically also displays the form
-    success_url = '/bank_accounts/create'  # URL to redirect after user successfully submits form.
-
-
-# An Authorized User for this view is a User that also holds the Account
-# Problem: How do I implement Authorization in a class based view?
-# class AccountUpdateView(LoginRequiredMixin, UpdateView):  # Update Account database objects
-#     # Authorization check
-#
-#     model = Account
-#     fields = ['account_type']
-#     template_name = 'bank_accounts/update.html'
-#     # pk_url_kwarg = 'pk'  # The name of the URLConfig keyword argument that contains the primary key.
-#
-#     def form_valid(self, form):  # called when User submits valid form
-#         account = form.save(commit=False)
-#         account.updated_by = self.request.user
-#         account.updated_at = timezone.now()
-#         account.save()
-#         return redirect(to=reverse('bank_accounts:account_detail', kwargs={'pk': account.pk}))
 
 # User is submitting or viewing Account update form
+# Uses raw html instead of Django to implement forms in the template
+# def account_create_raw_view(request):
+#     """
+#     Similar to account_create_view, but implemented without Django forms. Unsafe, as it doesn't perform form validation.
+#     :param request:
+#     :return:
+#     """
+#     # If the form has been filled out
+#     if request.method == 'POST':
+#         # The form describes the properties of the new account.
+#         account_type = request.POST.get('type')
+#         account_owner = request.POST.get('owner')
+#         account_balance = 0
+#         account_bank = request.POST.get('bank')
+#         account_routing_number = request.POST.get('routing_number')
+#
+#         # Save the account onto the database.
+#         Account.objects.create(type=account_type, owner=account_owner, balance=account_balance, bank=account_bank,
+#                                routing_number=account_routing_number)
+#
+#     # Return an empty form
+#     return render(request, 'bank_accounts/create_raw.html')
+
 @login_required
 def account_update_view(request, pk):
     # An User is authorized if he is updating an Account he holds
@@ -126,16 +115,51 @@ def account_update_view(request, pk):
 
     else:  # Unauthorized
         return HttpResponseForbidden()
+# An Authorized User for this view is a User that also holds the Account
+# Problem: How do I implement Authorization in a class based view?
+# class AccountUpdateView(LoginRequiredMixin, UpdateView):  # Update Account database objects
+#     # Authorization check
+#
+#     model = Account
+#     fields = ['account_type']
+#     template_name = 'bank_accounts/update.html'
+#     # pk_url_kwarg = 'pk'  # The name of the URLConfig keyword argument that contains the primary key.
+#
+#     def form_valid(self, form):  # called when User submits valid form
+#         account = form.save(commit=False)
+#         account.updated_by = self.request.user
+#         account.updated_at = timezone.now()
+#         account.save()
+#         return redirect(to=reverse('bank_accounts:account_detail', kwargs={'pk': account.pk}))
 
 
-class UserCreateView(CreateView):  # CreateView indicates creation of object in database (using forms)
-    form_class = UserCreationForm  # Format of the form
-    template_name = 'registration/signup.html'  # Template that uses the form to display user interface
-    success_url = 'accounts/login'
+@login_required
+def account_delete_view(request, pk):
+    try:
+        account_requested = Account.objects.get(pk=pk)
+    except Account.DoesNotExist:
+        return Http404
+
+    # Check Authorization
+    if request.user == account_requested.holder:
+        if request.POST:  # User submit delete form
+            # Delete Account
+            account_requested.delete()
+            return redirect(to=reverse('bank_accounts:account_list'))
+
+        else:  # User views the deletion form
+            context = {'account': account_requested}
+            return render(request, 'bank_accounts/delete.html', context)
+    else:
+        return HttpResponseForbidden()  # Unauthorized
+# class AccountDeleteView(LoginRequiredMixin, DeleteView):  # Users may delete Accounts they hold
+#     model = Account
+#     template_name = 'bank_accounts/delete.html'
+#     success_url = reverse('bank_accounts:account_list')
 
 
-# Authenticated Users may view Accounts they hold
 # If User is not authenticated, then we URL redirect to login (default is auth login view)
+# Display a list of a User's Accounts
 class AccountListView(LoginRequiredMixin, ListView):
     template_name = 'bank_accounts/account_list.html'
     model = Account
@@ -143,10 +167,6 @@ class AccountListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):  # Get the list of model instances we can display
         return Account.objects.filter(holder=self.request.user)
-
-
-# DetailView expects an ID (from URL parameter) associated to the model instance
-# LoginMixin ensures only authenticated Users may call the view
 
 
 # Custom account detail view that enforces: Only Authenticated, Account holders may view an Account's details
@@ -168,8 +188,7 @@ def account_detail_view(request, pk):
     # Else User is not Authorized to view resource
     else:
         return HttpResponseForbidden()
-
-
+# DetailView expects an ID (from URL parameter) associated to the model instance
 # class AccountDetailView(LoginRequiredMixin, DetailView):
 #     template_name = 'bank_accounts/account_detail.html'
 #     model = Account
@@ -180,4 +199,8 @@ def account_detail_view(request, pk):
 
 
 #TODO Implement Users can make transfer money between Accounts
+
+
+
+
 

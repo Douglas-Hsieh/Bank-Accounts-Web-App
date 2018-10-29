@@ -192,6 +192,40 @@ class AccountUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, 403)  # Forbidden
 
 
+class AccountDeleteViewTests(TestCase):
+    def test_not_authenticated(self):
+        """
+        If client is not logged in, then client may not delete an Account.
+        :return:
+        """
+        # Create Account for an User
+        user = create_user('username', 'password')
+        account = create_account(account_type=Account.CHECKING, creator=user, holder=user, balance=0,
+                                 bank=Account.WELLS_FARGO, routing_number=123456789)
+
+        url = reverse('bank_accounts:delete', kwargs={'pk': account.pk})
+        response = self.client.get(url)
+        self.assertRedirects(response, '%s?next=%s' % (reverse('login'), url))
+
+    def test_not_authorized(self):
+        """
+        If client does not hold an Account, then he may not delete it.
+        :return:
+        """
+        # Create Account for an User
+        user_1 = create_user('user_1', 'password')
+        user_2 = create_user('user_2', 'password')
+        account_1 = create_account(account_type=Account.CHECKING, creator=user_1, holder=user_1, balance=0,
+                                   bank=Account.WELLS_FARGO, routing_number=123456789)
+
+        # Client logins and attempts accesses delete view
+        self.client.login(username='user_2', password='password')
+        url = reverse('bank_accounts:delete', kwargs={'pk': account_1.pk})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 403)  # Forbidden
+
+
 def create_user(username, password):
     new_user = User.objects.create(username=username)
     new_user.set_password(password)
