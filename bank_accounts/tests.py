@@ -151,6 +151,47 @@ class AccountDetailViewTests(TestCase):
         # self.assertRedirects(response, reverse('login'), 200)  # Successfully redirected to login page
 
 
+class AccountCreateViewTests(TestCase):
+    def test_not_authenticated(self):
+        """
+        If client is not logged in as User, then client may not create an Account without logging in.
+        :return:
+        """
+        request_url = reverse('bank_accounts:create')
+        # Client attempts to create an account
+        response = self.client.get(request_url)
+        # Client is redirected to login and come back.
+        self.assertRedirects(
+            response=response,
+            expected_url='%s?next=%s' % (reverse('login'), request_url)
+        )
+
+
+class AccountUpdateViewTests(TestCase):
+    def test_not_authenticated_or_authorized(self):
+        """
+        If client not logged in, then client may not update an Account.
+        If User does not hold an Account, he may not update it.
+        :return:
+        """
+        # Create users
+        user_1 = create_user('user_1', 'password')
+        user_2 = create_user('user_2', 'password')
+        # Create an Account for a User
+        account_1 = create_account(account_type=Account.CHECKING, creator=user_1, holder=user_1, balance=0,
+                                   bank=Account.WELLS_FARGO, routing_number=123456789)
+        request_url = reverse('bank_accounts:update', kwargs={'pk': account_1.pk})
+
+        # Check Authentication
+        response = self.client.get(request_url)
+        self.assertRedirects(response, expected_url='%s?next=%s' % (reverse('login'), request_url))
+
+        # Check Authorization
+        self.client.login(username='user_2', password='password')  # Client is now authenticated but not authorized
+        response = self.client.get(request_url)
+        self.assertEqual(response.status_code, 403)  # Forbidden
+
+
 def create_user(username, password):
     new_user = User.objects.create(username=username)
     new_user.set_password(password)

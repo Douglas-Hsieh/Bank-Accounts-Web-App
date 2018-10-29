@@ -18,3 +18,13 @@ class AccountForm(forms.ModelForm):  # a form associated with the database (via 
             'bank',
             'routing_number',
         ]
+
+class AccountUpdateForm(forms.ModelForm):
+    """
+    Form for updating an Account
+    """
+    class Meta:
+        model = Account
+        fields = [
+            'account_type'
+        ]

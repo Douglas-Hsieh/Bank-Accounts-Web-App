@@ -1,5 +1,5 @@
 from django.db import models  # Python objects that map to the database
-from django.contrib.auth.models import User  # User models from Django Auth
+from django.contrib.auth.models import Permission, User  # User models from Django Auth
 
 # Create your models here.
 
@@ -42,3 +42,14 @@ class Account(models.Model):
 
     def __str__(self):
         return str(self.id)
+
+    # Permissions:
+    # Permission models store information associating users/groups to permissions
+    # class Meta:
+    #     permissions = (
+    #         ("is_updating_own_account", "Update an Account that the User holds")
+    #     )
+
+
+
+
