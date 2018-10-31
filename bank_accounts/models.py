@@ -41,7 +41,7 @@ class Account(models.Model):
     routing_number = models.IntegerField(null=True)
 
     def __str__(self):
-        return str(self.id)
+        return self.account_type + ' Account ' + str(self.id)
 
     # Permissions:
     # Permission models store information associating users/groups to permissions

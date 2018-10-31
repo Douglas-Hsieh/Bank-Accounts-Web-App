@@ -5,6 +5,9 @@
     <title>{% block title %}untitled{% endblock %}</title>
 </head>
 <body>
+    {% if message %}
+        <i>{{ message }}</i>
+    {% endif %}
 
     <ul class="sidebar-nav">
         {% if user.is_authenticated %}
@@ -21,7 +24,7 @@
         {% else %}
             {# User may login #}
             <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a></p>
-    {% endif %}
+        {% endif %}
     </ul>
 
     {% block content %}No content{% endblock %}

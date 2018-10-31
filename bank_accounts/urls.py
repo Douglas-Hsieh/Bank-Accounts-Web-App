@@ -9,7 +9,7 @@ Class-based views
 
 from django.urls import path
 from bank_accounts.views import home_view, AccountCreateView, AccountListView,\
-    account_detail_view, account_update_view, account_delete_view
+    account_detail_view, account_update_view, account_delete_view, internal_transfer_view
 
 app_name = 'bank_accounts'  # URL Namespace
 urlpatterns = [
@@ -24,4 +24,6 @@ urlpatterns = [
     # DetailView expects a URL argument to determine the model to detail
     # path('<int:pk>/user_account_detail', AccountDetailView.as_view(), name='account_detail'),
     path('<int:pk>/user_account_detail', account_detail_view, name='account_detail'),
+    path('internal_transfer', internal_transfer_view, name='internal_transfer')
+    # path('internal_transfer', raw_internal_transfer_view, name='internal_transfer')
 ]

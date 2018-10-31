@@ -3,6 +3,11 @@
 from django import forms
 from .models import Account
 
+# Django Forms have automatic validation dependent on fields
+
+# forms.Form allows for customization of forms
+# forms.ModelForm has fields based upon a Model and allows for tweaking
+
 
 class AccountForm(forms.ModelForm):  # a form associated with the database (via a model)
     """
@@ -29,3 +34,13 @@ class AccountUpdateForm(forms.ModelForm):
         fields = [
             'account_type'
         ]
+
+
+class InternalTransferForm(forms.Form):
+    """
+    Form for making an internal transfer between Accounts
+    """
+    from_account = forms.IntegerField()
+    to_account = forms.IntegerField()
+    balance = forms.IntegerField()
+

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}
+    Make an Internal Transfer
+{% endblock %}
+
+{% block content %}
+    <form method="POST" action={% url 'bank_accounts:internal_transfer'%}>
+        {% csrf_token %}
+        From: <br>
+        <select name="from_account">
+            {% for account in accounts %}
+                <option value="{{ account.pk }}">{{ account }}</option>
+            {% endfor %}
+        </select> <br>
+        To: <br>
+        <select name="to_account">
+            {% for account in accounts %}
+                <option value="{{ account.pk }}">{{ account }}</option>
+            {% endfor %}
+        </select> <br>
+        Amount: <br>
+        <input type="number" name='balance' value="0"> <br>
+
+        <input type="submit" value="Make Transfer">
+    </form>
+{% endblock %}

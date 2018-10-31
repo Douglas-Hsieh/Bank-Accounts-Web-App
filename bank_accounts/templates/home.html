@@ -5,7 +5,8 @@ Accounts Home
 {% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'bank_accounts:account_list' %}">Access your bank accounts</a></p>
+    <p><a href={% url 'bank_accounts:account_list' %}>Access your bank accounts</a></p>
+    <p><a href={% url 'bank_accounts:internal_transfer' %}>Make an internal transfer</a></p>
     <p><a href={% url 'bank_accounts:create' %}>Create a new bank account</a></p>
     <p><a href={% url 'signup' %}>New User? Create a User account</a></p>
 

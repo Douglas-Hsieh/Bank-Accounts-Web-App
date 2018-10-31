@@ -6,10 +6,26 @@ from django.urls import reverse
 from bank_accounts.models import Account
 from django.contrib.auth.models import User
 
+import random
+
 # Create your tests here.
 
 # TODO: Implement Users being able to claim accounts (ForeignKey on Accounts tied to Users)
 # TODO: Emailing users password resets.
+
+
+class UserTests(TestCase):
+    """
+    Testing clients who are logged in as Users.
+    """
+    def test_user_can_login(self):
+        """
+        A Client who is a User may login.
+        :return:
+        """
+        user = create_user('username', 'password')
+        logged_in = self.client.login(username='username', password='password')
+        self.assertEqual(logged_in, True)
 
 
 class HomeViewTests(TestCase):
@@ -27,7 +43,6 @@ class HomeViewTests(TestCase):
 
 
 class AccountListViewTests(TestCase):
-
     def test_not_authenticated(self):
         """
         If user is not authenticated, he is redirected to login. After login, he can come back.
@@ -98,7 +113,7 @@ class AccountListViewTests(TestCase):
 
         self.assertIs(response.status_code, 200)  # OK
         # User can view his Accounts
-        self.assertQuerysetEqual(response.context['account_list'], ['<Account: 1>', '<Account: 2>'], ordered=False)
+        self.assertQuerysetEqual(response.context['account_list'], ['<Account: Checking Account 1>', '<Account: Savings Account 2>'], ordered=False)
 
 
 class AccountDetailViewTests(TestCase):
@@ -168,7 +183,7 @@ class AccountCreateViewTests(TestCase):
 
 
 class AccountUpdateViewTests(TestCase):
-    def test_not_authenticated_or_authorized(self):
+    def test_not_authenticated(self):
         """
         If client not logged in, then client may not update an Account.
         If User does not hold an Account, he may not update it.
@@ -186,6 +201,14 @@ class AccountUpdateViewTests(TestCase):
         response = self.client.get(request_url)
         self.assertRedirects(response, expected_url='%s?next=%s' % (reverse('login'), request_url))
 
+    def test_not_authorized(self):
+        # Create users
+        user_1 = create_user('user_1', 'password')
+        user_2 = create_user('user_2', 'password')
+        # Create an Account for a User
+        account_1 = create_account(account_type=Account.CHECKING, creator=user_1, holder=user_1, balance=0,
+                                   bank=Account.WELLS_FARGO, routing_number=123456789)
+        request_url = reverse('bank_accounts:update', kwargs={'pk': account_1.pk})
         # Check Authorization
         self.client.login(username='user_2', password='password')  # Client is now authenticated but not authorized
         response = self.client.get(request_url)
@@ -226,23 +249,227 @@ class AccountDeleteViewTests(TestCase):
         self.assertEqual(response.status_code, 403)  # Forbidden
 
 
-def create_user(username, password):
+class InternalTransferViewTests(TestCase):
+    def test_not_authenticated(self):
+        """
+        If User not logged in, he may not make an internal transfer or view the internal transfer form.
+        :return:
+        """
+        user = create_user('username', 'password')
+
+        # Create an Account for a User
+        account_1 = create_account(holder=user, balance=100)
+        account_2 = create_account(holder=user, balance=100)
+
+        url = reverse('bank_accounts:internal_transfer')
+
+        # Client attempts to view the internal transfer form
+        get_response = self.client.get(url)
+        # Client redirected to login
+        self.assertRedirects(get_response, '%s?next=%s' % (reverse('login'), url))
+
+        # Client attempts to make an internal transfer
+        post_response = self.client.post(path=url, data={
+            'from_account': account_1.id,
+            'to_account': account_2.id,
+            'balance': 100})
+        # Client redirected to login
+        self.assertRedirects(post_response, '%s?next=%s' % (reverse('login'), url))
+        # Transfer does not occur
+        self.assertEqual(Account.objects.get(pk=account_1.pk).balance, 100)
+        self.assertEqual(Account.objects.get(pk=account_2.pk).balance, 100)
+
+    def test_not_authorized(self):
+        """
+        Users cannot internally transfer funds between Accounts they don't hold.
+        :return:
+        """
+        user_1 = create_user('username_1', 'password')
+        user_2 = create_user('username_2', 'password')
+        account_1 = create_account(holder=user_1, balance=100)
+        account_2 = create_account(holder=user_2, balance=100)
+        account_3 = create_account(holder=user_2, balance=100)
+
+        # User logs in
+        self.client.login(username='username_1', password='password')
+
+        # User attempts to internally transfer from an Account he holds to an Account he doesn't hold.
+        url = reverse('bank_accounts:internal_transfer')
+        response = self.client.post(path=url, data={
+            'from_account': account_1.id,
+            'to_account': account_2.id,
+            'balance': 100})
+        self.assertEqual(response.status_code, 200)  # OK
+        # Transfer does not occur
+        self.assertEqual(Account.objects.get(pk=account_1.pk).balance, 100)
+        self.assertEqual(Account.objects.get(pk=account_2.pk).balance, 100)
+
+        # User attempts to internally transfer from an Account he doesn't hold to an Account he does hold.
+        url = reverse('bank_accounts:internal_transfer')
+        response = self.client.post(path=url, data={
+            'from_account': account_2.id,
+            'to_account': account_1.id,
+            'balance': 100})
+        self.assertEqual(response.status_code, 200)  # OK
+        # Transfer does not occur
+        self.assertEqual(Account.objects.get(pk=account_1.pk).balance, 100)
+        self.assertEqual(Account.objects.get(pk=account_2.pk).balance, 100)
+
+        # User attempts to internally transfer from an Account he doesn't hold to an Account he doesn't hold
+        url = reverse('bank_accounts:internal_transfer')
+        response = self.client.post(path=url, data={
+            'from_account': account_2.id,
+            'to_account': account_3.id,
+            'balance': 100})
+        self.assertEqual(response.status_code, 200)  # OK
+        # Transfer does not occur
+        self.assertEqual(Account.objects.get(pk=account_2.pk).balance, 100)
+        self.assertEqual(Account.objects.get(pk=account_3.pk).balance, 100)
+
+    def test_valid_transfer(self):
+        """
+        Users can transfer funds between accounts.
+        :return:
+        """
+        user = create_user('username', 'password')
+        account_1 = create_account(account_type=Account.CHECKING, creator=user, holder=user, balance=100,
+                                   bank=Account.WELLS_FARGO, routing_number=123456789)
+        account_2 = create_account(account_type=Account.SAVINGS, creator=user, holder=user, balance=100,
+                                   bank=Account.CHASE, routing_number=987654321)
+        self.client.login(username='username', password='password')
+
+        url = reverse('bank_accounts:internal_transfer')
+
+        # User submits the internal transfer form
+        response = self.client.post(path=url, data={
+            'from_account': account_1.id,
+            'to_account': account_2.id,
+            'balance': 100})
+
+        self.assertEqual(response.status_code, 200)  # OK
+
+        updated_account_1 = Account.objects.get(pk=account_1.pk)
+        updated_account_2 = Account.objects.get(pk=account_2.pk)
+
+        # Transfer is successful
+        self.assertEqual(updated_account_1.balance, 0)
+        self.assertEqual(updated_account_2.balance, 200)
+
+    def test_not_enough_funds(self):
+        """
+        Users cannot transfer more funds than they actually have.
+        :return:
+        """
+        user = create_user('username', 'password')
+        account_1 = create_account(account_type=Account.CHECKING, creator=user, holder=user, balance=100,
+                                   bank=Account.WELLS_FARGO, routing_number=123456789)
+        account_2 = create_account(account_type=Account.SAVINGS, creator=user, holder=user, balance=100,
+                                   bank=Account.CHASE, routing_number=987654321)
+        self.client.login(username='username', password='password')
+
+        url = reverse('bank_accounts:internal_transfer')
+
+        # User submits the internal transfer form
+        response = self.client.post(path=url, data={
+            'from_account': account_1.id,
+            'to_account': account_2.id,
+            'balance': 101})
+
+        self.assertEqual(response.status_code, 200)
+
+        updated_account_1 = Account.objects.get(pk=account_1.pk)
+        updated_account_2 = Account.objects.get(pk=account_2.pk)
+
+        # Transfer did not occur
+        self.assertEqual(updated_account_1.balance, 100)
+        self.assertEqual(updated_account_2.balance, 100)
+
+    def test_multiple_transfers(self):
+        """
+        If User makes multiple internal transfers, then they will be successful.
+        :return:
+        """
+        user = create_user('username', 'password')
+        account_1 = create_account(account_type=Account.CHECKING, creator=user, holder=user, balance=1000,
+                                   bank=Account.WELLS_FARGO, routing_number=123456789)
+        account_2 = create_account(account_type=Account.SAVINGS, creator=user, holder=user, balance=1000,
+                                   bank=Account.CHASE, routing_number=987654321)
+        self.client.login(username='username', password='password')
+
+        url = reverse('bank_accounts:internal_transfer')
+
+        # User submits multiple forms
+        for i in range(0, 1000):
+            self.client.post(path=url, data={
+                'from_account': account_1.id,
+                'to_account': account_2.id,
+                'balance': 1})
+            self.client.post(path=url, data={
+                'from_account': account_2.id,
+                'to_account': account_1.id,
+                'balance': 1})
+
+        updated_account_1 = Account.objects.get(pk=account_1.pk)
+        updated_account_2 = Account.objects.get(pk=account_2.pk)
+
+        # Transfer successful
+        self.assertEqual(updated_account_1.balance, 1000)
+        self.assertEqual(updated_account_2.balance, 1000)
+
+    def test_nonexisting_accounts(self):
+        """
+        If a User attempts to make an internal transfer between Accounts that don't exist, then an appropriate message
+        is displayed.
+        :return:
+        """
+        user = create_user('username', 'password')
+        self.client.login(username='username', password='password')
+
+        # Create an Account for a User
+        account_1 = create_account(holder=user, balance=100)
+        account_2 = create_account(holder=user, balance=100)
+
+        url = reverse('bank_accounts:internal_transfer')
+
+        # User attempts to make an internal transfer between nonexisting Accounts
+        response = self.client.post(path=url, data={
+            'from_account': 42,
+            'to_account': 43,
+            'balance': 100})
+
+        # Response is handled
+        self.assertEqual(response.status_code, 200)  # OK
+
+
+def create_user(username='username', password='password'):
     new_user = User.objects.create(username=username)
     new_user.set_password(password)
     new_user.save()
     return new_user
 
 
-def create_account(account_type, creator, holder, balance, bank, routing_number):
+def create_account(holder, account_type=None, creator=None, balance=None, bank=None, routing_number=None):
     """
-    Saves an Account to the database and returns the same Account
+    Saves an Account associated with a User to the database and returns the same Account.
     :param account_type:
     :param creator:
-    :param holder:
+    :param holder: User who holds this Account
     :param balance:
     :param bank:
     :param routing_number:
     :return:
     """
+    if account_type is None:
+        account_type = random.choice(Account.ACCOUNT_TYPE_CHOICES)
+    if creator is None:
+        creator = holder.username
+    if balance is None:
+        balance = random.randint(0, 1000)
+    if bank is None:
+        bank = random.choice(Account.BANK_CHOICES)
+    if routing_number is None:
+        routing_number = random.randint(0, 10000000)
+
     return Account.objects.create(account_type=account_type, creator=creator, holder=holder, balance=balance, bank=bank,
                                   routing_number=routing_number)
+
