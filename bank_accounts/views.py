@@ -3,7 +3,8 @@ from django.utils import timezone
 
 # Create your views here.
 
-from .models import Account
+from .models import Account, InternalTransferReceipt
+from django.contrib.auth.models import User
 
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, Http404
 
@@ -198,55 +199,17 @@ def account_detail_view(request, pk):
     #     return Account.objects.get(holder=self.request.user)  # User can access his own accounts
 
 
-#TODO Implement Users can make transfer money between Accounts
-
-
-# TODO Implement internal transfers of balance between a User's Accounts
-@login_required
-def raw_internal_transfer_view(request):  # Uses Raw HTML instead of Django ModelForm. Doesn't support form validation.
-    # Retrieve a list of User's Accounts
-    accounts = Account.objects.filter(holder=request.user)
-
-    if request.method == 'POST':  # User submitted form
-
-        # TODO: Validate our data
-        # Process form
-        from_account = Account.objects.get(pk=request.POST.get('from_account'))
-        to_account = Account.objects.get(pk=request.POST.get('to_account'))
-        amount = int(request.POST.get('balance'))
-
-        # Check validity of transfer
-        if amount > from_account.balance:  # Not enough money to transfer
-            return render(request, 'bank_accounts/account_list.html',
-                          {'message': 'Error: Not enough funds to make transfer.'})
-
-        # Perform transfer
-        # TODO: Worry about atomicity of transaction
-        from_account.balance = from_account.balance - amount
-        to_account.balance = to_account.balance + amount
-
-        from_account.save()
-        to_account.save()
-
-        # Redirect to account list
-        return render(request, 'bank_accounts/account_list.html', {'message': "Internal transfer successful."})
-
-    else:  # User is viewing form
-        if not accounts:  # User has no Accounts
-            return Http404  # TODO Do I want this behavior?
-        else:
-            context = {'accounts': accounts}
-            # Internal Transfers take place between two of a User's Accounts
-            return render(request, 'bank_accounts/internal_transfer.html', context)
-
-
+# TODO: Refreshing causes User to resubmit form. Make sure to redirect them and make them do a GET request right after.
+# TODO: Implement an optional message and timestamp for each internal transfer
+# TODO: Breaks when User has no Accounts
 @login_required
 def internal_transfer_view(request):
     # Retrieve a list of User's Accounts
     accounts = Account.objects.filter(holder=request.user)
 
+    # TODO: Test for no Accounts
     if not accounts:  # User has no Accounts
-        return render(request, reverse('bank_accounts:home'), {'message': 'Error: No Accounts to transfer between.'})
+        return render(request, 'home.html', {'message': 'Error: No Accounts to transfer between.'})
 
     if request.method == 'POST':  # User submitted form
         # Process form
@@ -266,7 +229,8 @@ def internal_transfer_view(request):
                 return render(request, 'bank_accounts/account_list.html',
                               {'account_list': accounts,
                                'message': 'Error: Not enough funds to make transfer.'})
-            # Check if transfer is between valid accounts
+
+            # Check transfer is between valid accounts
             account_pks = []
             for account in accounts:
                 account_pks.append(account.pk)
@@ -275,13 +239,29 @@ def internal_transfer_view(request):
                               {'account_list': accounts,
                                'message': 'Error: Accounts selected invalid.'})
 
+            # Check transfer is not between the same accounts
+            if from_account.pk == to_account.pk:
+                return render(request, 'bank_accounts/account_list.html',
+                              {'account_list': accounts,
+                               'message': 'Error: Selected Accounts cannot be the same.'})
+
+            # Check that transferred funds is positive
+            if amount <= 0:
+                return render(request, 'bank_accounts/account_list.html',
+                              {'account_list': accounts,
+                               'message': 'Error: Amount to transfer must be positive.'})
+
             # Perform transfer
             # TODO: Worry about atomicity of transaction
             from_account.balance = from_account.balance - amount
             to_account.balance = to_account.balance + amount
-
             from_account.save()
             to_account.save()
+
+            # Save receipt
+            InternalTransferReceipt.objects.create(user=request.user,
+                                                   from_account=from_account,
+                                                   to_account=to_account, amount=amount)
 
             # Redirect to account list
             return render(request, 'bank_accounts/account_list.html', {'account_list': accounts,
@@ -294,9 +274,67 @@ def internal_transfer_view(request):
     else:  # User is viewing form
         # Internal Transfers take place between two of a User's Accounts
         return render(request, 'bank_accounts/internal_transfer.html', {'accounts': accounts})
+# Uses Raw HTML instead of Django ModelForm. Doesn't support form validation.
+# @login_required
+# def raw_internal_transfer_view(request):
+#     # Retrieve a list of User's Accounts
+#     accounts = Account.objects.filter(holder=request.user)
+#
+#     if request.method == 'POST':  # User submitted form
+#
+#         # TODO: Validate our data
+#         # Process form
+#         from_account = Account.objects.get(pk=request.POST.get('from_account'))
+#         to_account = Account.objects.get(pk=request.POST.get('to_account'))
+#         amount = int(request.POST.get('balance'))
+#
+#         # Check validity of transfer
+#         if amount > from_account.balance:  # Not enough money to transfer
+#             return render(request, 'bank_accounts/account_list.html',
+#                           {'message': 'Error: Not enough funds to make transfer.'})
+#
+#         # Perform transfer
+#         # TODO: Worry about atomicity of transaction
+#         from_account.balance = from_account.balance - amount
+#         to_account.balance = to_account.balance + amount
+#
+#         from_account.save()
+#         to_account.save()
+#
+#         # Redirect to account list
+#         return render(request, 'bank_accounts/account_list.html', {'message': "Internal transfer successful."})
+#
+#     else:  # User is viewing form
+#         if not accounts:  # User has no Accounts
+#             return Http404  # TODO Do I want this behavior?
+#         else:
+#             context = {'accounts': accounts}
+#             # Internal Transfers take place between two of a User's Accounts
+#             return render(request, 'bank_accounts/internal_transfer.html', context)
 
 
-# TODO: Refreshing causes User to resubmit form. Make sure to redirect them and make them do a GET request right after.
+# TODO: View internal transfer history
+
+class InternalTransferReceiptList(LoginRequiredMixin, ListView):
+    template_name = 'bank_accounts/internal_transfer_receipt_list.html'
+    model = InternalTransferReceipt
+    context_object_name = 'receipts'
+
+    def get_queryset(self):  # Get the list of model instances we can display
+        return InternalTransferReceipt.objects.filter(user=self.request.user)
+
+
+# def internal_transfer_receipt_list_view(request):
+#     pass
+
+
+# User is a making a payment to another User
+@login_required
+def external_transfer_view(request):
+    pass
+
+
+
 
 # TODO: External Transfer
 

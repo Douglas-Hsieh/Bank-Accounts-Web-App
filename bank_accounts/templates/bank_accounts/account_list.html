@@ -8,8 +8,12 @@
     <p><a href={% url 'bank_accounts:internal_transfer' %}>Make an internal transfer</a></p>
 
     <b>List of Accounts held by {{ request.user.username }}:</b>
-    {% for account in account_list %}
-        {# {% url 'app_name:URL_name URL arguments' %} #}
-        <p><a href="{% url 'bank_accounts:account_detail' account.id %}">{{ account }}</a>: ${{ account.balance }}</p>
-    {% endfor %}
+    {% if account_list %}
+        {% for account in account_list %}
+            {# {% url 'app_name:URL_name URL arguments' %} #}
+            <p><a href="{% url 'bank_accounts:account_detail' account.id %}">{{ account }}</a>: ${{ account.balance }}</p>
+        {% endfor %}
+    {% else %}
+        <p>Nothing as of yet!</p>
+    {% endif %}
 {% endblock %}

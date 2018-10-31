@@ -250,6 +250,9 @@ class AccountDeleteViewTests(TestCase):
 
 
 class InternalTransferViewTests(TestCase):
+
+    url = reverse('bank_accounts:internal_transfer')
+
     def test_not_authenticated(self):
         """
         If User not logged in, he may not make an internal transfer or view the internal transfer form.
@@ -416,6 +419,31 @@ class InternalTransferViewTests(TestCase):
         self.assertEqual(updated_account_1.balance, 1000)
         self.assertEqual(updated_account_2.balance, 1000)
 
+    def test_no_accounts(self):
+        """
+        If a User has no Accounts, then we handle it properly.
+        :return:
+        """
+        user = create_user('username', 'password')
+        self.client.login(username='username', password='password')
+
+        url = reverse('bank_accounts:internal_transfer')
+
+        # GET
+        get_response = self.client.get(url)
+        self.assertEqual(get_response.status_code, 200)  # OK
+
+        # POST
+        post_response = self.client.post(
+            path=url,
+            data={
+                'from_account': 42,
+                'to_account': 43,
+                'balance': 100
+            }
+        )
+        self.assertEqual(post_response.status_code, 200)  # OK
+
     def test_nonexisting_accounts(self):
         """
         If a User attempts to make an internal transfer between Accounts that don't exist, then an appropriate message
@@ -439,6 +467,12 @@ class InternalTransferViewTests(TestCase):
 
         # Response is handled
         self.assertEqual(response.status_code, 200)  # OK
+
+    def test_non_positive_amount(self):
+        """
+        If a User attempts to transfer a non-positive amount of funds, then the transfer will not occur.
+        :return:
+        """
 
 
 def create_user(username='username', password='password'):

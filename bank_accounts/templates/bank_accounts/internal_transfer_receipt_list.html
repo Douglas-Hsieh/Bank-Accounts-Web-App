@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Internal Transfer History
+{% endblock %}
+
+{% block content %}
+    <p>Internal Transfer History:</p>
+    {% if receipts %}
+        {% for receipt in receipts %}
+            <p>{{ receipt.date }}<br>
+            ${{ receipt.amount }} sent from
+                <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>
+                to
+                <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>
+        {% endfor %}
+    {% else %}
+        <p>Nothing as of yet!</p>
+    {% endif %}
+{% endblock %}

@@ -1,7 +1,13 @@
 from django.db import models  # Python objects that map to the database
 from django.contrib.auth.models import Permission, User  # User models from Django Auth
 
+from django.utils import timezone
+
 # Create your models here.
+
+# Models:
+# Model represent database tables
+# The fields of a models.Model correspond to columns of a SQL database table.
 
 # Attributes:
 # blank=True/False specifies whether it will render as required or not
@@ -16,6 +22,9 @@ from django.contrib.auth.models import Permission, User  # User models from Djan
 
 
 class Account(models.Model):
+    """
+    Each instance represent a User's bank account.
+    """
 
     CHECKING = "Checking"
     SAVINGS = "Savings"
@@ -42,6 +51,25 @@ class Account(models.Model):
 
     def __str__(self):
         return self.account_type + ' Account ' + str(self.id)
+
+
+class InternalTransferReceipt(models.Model):
+    """
+    Each instance is a set of information associated with a successful internal transfer.
+    """
+
+    user = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True)  # User that made the transfer. Anonymous if no User.
+    from_account = models.ForeignKey(to=Account, on_delete=models.SET_NULL, null=True, related_name='from_account')
+    to_account = models.ForeignKey(to=Account, on_delete=models.SET_NULL, null=True, related_name='to_account')
+    amount = models.IntegerField()
+    date = models.DateTimeField(default=timezone.now)  # Date of transfer
+    # comment = models.CharField(max_length=500)  # User comments on nature of transfer
+
+    def __str__(self):
+        return str(self.id)
+
+
+
 
     # Permissions:
     # Permission models store information associating users/groups to permissions
