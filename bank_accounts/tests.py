@@ -473,6 +473,46 @@ class InternalTransferViewTests(TestCase):
         If a User attempts to transfer a non-positive amount of funds, then the transfer will not occur.
         :return:
         """
+        user = create_user('username', 'password')
+        account_1 = create_account(holder=user, balance=100)
+        account_2 = create_account(holder=user, balance=100)
+        self.client.login(username='username', password='password')
+
+        url = reverse('bank_accounts:internal_transfer')
+
+        # User transfers no funds
+        response_1 = self.client.post(path=url, data={
+            'from_account': account_1.id,
+            'to_account': account_2.id,
+            'balance': 0})
+        # Transfer failed
+        self.assertEqual(response_1.status_code, 200)
+        self.assertEqual(Account.objects.get(pk=account_1.pk).balance, 100)
+        self.assertEqual(Account.objects.get(pk=account_2.pk).balance, 100)
+
+        # User transfers negative funds
+        response_2 = self.client.post(path=url, data={
+            'from_account': account_1.id,
+            'to_account': account_2.id,
+            'balance': -10})
+        # Transfer failed
+        self.assertEqual(response_2.status_code, 200)
+        self.assertEqual(Account.objects.get(pk=account_1.pk).balance, 100)
+        self.assertEqual(Account.objects.get(pk=account_2.pk).balance, 100)
+
+
+class InternalTransferReceiptListViewTests(TestCase):
+
+    url = reverse('bank_accounts:internal_transfer_receipt_list')
+
+    def test_not_authenticated(self):
+        response = self.client.get(self.url)
+        # User is redirected to login, then come back.
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(
+            response=response,
+            expected_url='%s?next=%s' % (reverse('login'), self.url)
+        )
 
 
 def create_user(username='username', password='password'):

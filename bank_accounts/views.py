@@ -26,16 +26,27 @@ from django.contrib.auth.mixins import LoginRequiredMixin  # Use for class based
 
 
 def home_view(request):
+    """
+    Displays home page.
+    :param request:
+    :return:
+    """
     return render(request, 'home.html')
 
 
 class UserCreateView(CreateView):  # CreateView indicates creation of object in database (using forms)
+    """
+    Handles creation of new Users
+    """
     form_class = UserCreationForm  # Format of the form
     template_name = 'registration/signup.html'  # Template that uses the form to display user interface
     success_url = 'accounts/login'
 
 
 class AccountCreateView(LoginRequiredMixin, CreateView):  # CreateView is generic view for creating models with forms
+    """
+    Handles creation of new bank accounts.
+    """
     model = Account  # Model we're creating
     form_class = AccountForm  # Django Form class we're using
     template_name = 'bank_accounts/create.html'
@@ -85,7 +96,12 @@ class AccountCreateView(LoginRequiredMixin, CreateView):  # CreateView is generi
 
 @login_required
 def account_update_view(request, pk):
-    # An User is authorized if he is updating an Account he holds
+    """
+    Handles updating information about a bank account.
+    :param request:
+    :param pk:
+    :return:
+    """
     try:
         account_requested = Account.objects.get(pk=pk)
     except Account.DoesNotExist:
@@ -136,6 +152,12 @@ def account_update_view(request, pk):
 
 @login_required
 def account_delete_view(request, pk):
+    """
+    Displays and processes requests to delete a bank account.
+    :param request:
+    :param pk:
+    :return:
+    """
     try:
         account_requested = Account.objects.get(pk=pk)
     except Account.DoesNotExist:
@@ -162,6 +184,9 @@ def account_delete_view(request, pk):
 # If User is not authenticated, then we URL redirect to login (default is auth login view)
 # Display a list of a User's Accounts
 class AccountListView(LoginRequiredMixin, ListView):
+    """
+    Displays a list of bank accounts.
+    """
     template_name = 'bank_accounts/account_list.html'
     model = Account
     context_object_name = 'account_list'
@@ -173,6 +198,12 @@ class AccountListView(LoginRequiredMixin, ListView):
 # Custom account detail view that enforces: Only Authenticated, Account holders may view an Account's details
 @login_required
 def account_detail_view(request, pk):
+    """
+    Displays details about a specific bank account.
+    :param request:
+    :param pk:
+    :return:
+    """
     # Access the account we want to detail
     try:
         account = Account.objects.get(pk=pk)
@@ -200,14 +231,16 @@ def account_detail_view(request, pk):
 
 
 # TODO: Refreshing causes User to resubmit form. Make sure to redirect them and make them do a GET request right after.
-# TODO: Implement an optional message and timestamp for each internal transfer
-# TODO: Breaks when User has no Accounts
 @login_required
 def internal_transfer_view(request):
+    """
+    Handles the display and processing of internal transfer form.
+    :param request:
+    :return:
+    """
     # Retrieve a list of User's Accounts
     accounts = Account.objects.filter(holder=request.user)
 
-    # TODO: Test for no Accounts
     if not accounts:  # User has no Accounts
         return render(request, 'home.html', {'message': 'Error: No Accounts to transfer between.'})
 
@@ -253,10 +286,8 @@ def internal_transfer_view(request):
 
             # Perform transfer
             # TODO: Worry about atomicity of transaction
-            from_account.balance = from_account.balance - amount
-            to_account.balance = to_account.balance + amount
-            from_account.save()
-            to_account.save()
+            from_account.withdraw(amount)
+            to_account.deposit(amount)
 
             # Save receipt
             InternalTransferReceipt.objects.create(user=request.user,
@@ -314,8 +345,10 @@ def internal_transfer_view(request):
 
 
 # TODO: View internal transfer history
-
 class InternalTransferReceiptList(LoginRequiredMixin, ListView):
+    """
+    Displays a history of internal transfers.
+    """
     template_name = 'bank_accounts/internal_transfer_receipt_list.html'
     model = InternalTransferReceipt
     context_object_name = 'receipts'
@@ -333,14 +366,11 @@ class InternalTransferReceiptList(LoginRequiredMixin, ListView):
 def external_transfer_view(request):
     pass
 
-
-
-
 # TODO: External Transfer
-
 
 
 # TODO: Hosting on Heroku/Firebase
 
 
 
+# Figure out Django Concurrency

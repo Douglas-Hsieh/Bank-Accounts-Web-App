@@ -3,6 +3,8 @@ from django.contrib.auth.models import Permission, User  # User models from Djan
 
 from django.utils import timezone
 
+from .exceptions import InsufficientFunds
+
 # Create your models here.
 
 # Models:
@@ -52,6 +54,17 @@ class Account(models.Model):
     def __str__(self):
         return self.account_type + ' Account ' + str(self.id)
 
+    def deposit(self, amount):
+        self.balance = self.balance + amount
+        self.save()
+
+    def withdraw(self, amount):
+        if amount > self.balance:
+            raise InsufficientFunds()
+
+        self.balance = self.balance - amount
+        self.save()
+
 
 class InternalTransferReceipt(models.Model):
     """
@@ -77,7 +90,5 @@ class InternalTransferReceipt(models.Model):
     #     permissions = (
     #         ("is_updating_own_account", "Update an Account that the User holds")
     #     )
-
-
 
 
