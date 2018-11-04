@@ -130,3 +130,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # django-nose
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+
+# To be able to use the static files app
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
