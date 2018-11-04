@@ -515,6 +515,19 @@ class InternalTransferReceiptListViewTests(TestCase):
         )
 
 
+    # TODO Arexis found a bug
+    def test_deleted_account(self):
+        """
+        If a User deletes a
+        :return:
+        """
+        # Create User and Accounts
+        user = create_user('username', 'password')
+        account_1 = create_account(holder=user, balance=100)
+        account_2 = create_account(holder=user, balance=100)
+
+
+
 def create_user(username='username', password='password'):
     new_user = User.objects.create(username=username)
     new_user.set_password(password)
