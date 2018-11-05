@@ -5,11 +5,13 @@
 {% endblock title %}
 
 {% block content %}
-    Hi, welcome to Douglas Hsieh's site!
+    Welcome!
 
-    <p>Here are some app(s) I've made:</p>
+    <p>Here are some cool app(s) you may like:</p>
     <ul>
         <li><a href="{% url 'bank_accounts:home' %}">Bank Accounts</a></li>
     </ul>
+    <p><a href="{% url 'contact' %}">Found a Bug? Report it to our team! (actually it's just me lol)</a></p>
+
 
 {% endblock %}

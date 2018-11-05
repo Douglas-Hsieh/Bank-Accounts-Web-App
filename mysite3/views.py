@@ -9,4 +9,10 @@ def home_view(request):
     """
     return render(request, 'home.html')
 
-
+def contact_view(request):
+    """
+    Contact page
+    :param request:
+    :return:
+    """
+    return render(request, 'contact.html')

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Make a Payment
+{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        From: <br>
+        <select name="from_account">
+            {% for from_account in from_accounts %}
+                <option value="{{ from_account.pk }}">{{ from_account }}</option>
+            {% endfor %}
+        </select> <br>
+        To: <br>
+        <select name="payee">
+            {% for user in users %}
+                <option value="{{ user.pk }}">{{ user }}</option>
+            {% endfor %}
+        </select> <br>
+        Reason for Payment: <br>
+        <textarea name="comment"></textarea> <br>
+        Amount: <br>
+        <input type="number" name='amount' value="0"> <br>
+        <input type="submit" value="Make Transfer">
+    </form>
+{% endblock %}

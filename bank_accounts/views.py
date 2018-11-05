@@ -10,7 +10,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidde
 
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
 
-from .forms import AccountForm, AccountUpdateForm, InternalTransferForm
+from .forms import AccountForm, AccountUpdateForm, InternalTransferForm, ExternalTransferForm
 from django.contrib.auth.forms import UserCreationForm
 
 # Authentication (i.e. Checking if a client is also a User)
@@ -25,6 +25,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin  # Use for class based
 # class MyView(LoginRequiredMixin, View):
 
 
+@login_required
 def home_view(request):
     """
     Displays home page.
@@ -361,12 +362,62 @@ class InternalTransferReceiptList(LoginRequiredMixin, ListView):
 #     pass
 
 
-# User is a making a payment to another User
+# TODO: External Transfer
 @login_required
 def external_transfer_view(request):
-    pass
+    """
+    Handles the display and processing of external transfer form.
+    :param request:
+    :return:
+    """
 
-# TODO: External Transfer
+    # Get list of requesting User's Accounts
+    from_accounts = Account.objects.filter(holder=request.user)
+    # TODO: What if there are 1 million Users?
+    # Get list of all Users
+    users = User.objects.all()
+
+    if not from_accounts:  # User has no Accounts
+        return render(request, 'bank_accounts/home.html', {'message': 'Error: No Accounts to payments from.'})
+    if not users:
+        return render(request, 'bank_accounts/home.html', {'message': 'Error: No Users to make payments to.'})
+
+    if request.method == 'GET':  # User views form
+        return render(request, 'bank_accounts/external_transfer.html', {'from_accounts': from_accounts,
+                                                                        'users': users})
+    elif request.method == 'POST':  # User submits form
+        # Process Form
+        form = ExternalTransferForm(request.POST)
+        if form.is_valid():
+            try:
+                from_account = Account.objects.get(pk=form.cleaned_data['from_account'])
+            except Account.DoesNotExist:
+                pass
+            try:
+                payee = User.objects.get(pk=form.cleaned_data['payee'])
+            except User.DoesNotExist:
+                pass
+            amount = form.cleaned_data['amount']
+
+            # Business Logic
+            if amount > from_account.balance:  # Not enough funds
+                pass
+            if amount <= 0:  # Non-positive amount
+                pass
+            if request.user == payee:  # Payee is User himself
+                pass
+            if from_account.account_type != Account.CHECKING:  # from account is not a Checking Account
+                pass
+            # payee does not have a Checking Account
+
+            return redirect(reverse('bank_accounts:home'))
+        else:  # Invalid form
+            return redirect(reverse('bank_accounts:home'))
+    else:  # User makes some other request
+        # Treat it as GET request
+        return render(request, 'bank_accounts/external_transfer.html', {'from_accounts': from_accounts,
+                                                                        'users': users})
+
 
 
 # TODO: Hosting on Heroku/Firebase

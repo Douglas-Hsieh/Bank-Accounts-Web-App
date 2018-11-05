@@ -14,9 +14,9 @@
     {% if next %}
         {# User is logged in but doesn't have sufficient permissions #}
         {% if user.is_authenticated %}
-            <p>Your account doesn't have access to see this page. To proceed, please login with an account with access</p>
-        {# User is not logged in #}
-        {% else %}
+            <p>Your account doesn't have access to see this page. To proceed, please login with an account with access.</p>
+        {# User is not logged in and tried to access a page that required authentication #}
+        {% elif next != '/' %}
             <p>Please login to see this page.</p>
         {% endif %}
     {% endif %}

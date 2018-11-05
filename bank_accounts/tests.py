@@ -41,6 +41,18 @@ class HomeViewTests(TestCase):
         self.assertIs(response.status_code, 200)
         self.assertContains(response, '<title>\nAccounts Home\n</title>')
 
+    def test_not_authenticated(self):
+        """
+        If user is not authenticated, he is redirected to login. After login, he can come back.
+        :return:
+        """
+        url = reverse('bank_accounts:home')
+        response = self.client.get(url)
+        self.assertRedirects(
+            response=response,
+            expected_url='%s?next=%s' % (reverse('login'), url)
+        )
+
 
 class AccountListViewTests(TestCase):
     def test_not_authenticated(self):
@@ -514,8 +526,6 @@ class InternalTransferReceiptListViewTests(TestCase):
             expected_url='%s?next=%s' % (reverse('login'), self.url)
         )
 
-
-    # TODO Arexis found a bug
     def test_deleted_account(self):
         """
         If a User deletes account, then internal transfer list view still works.

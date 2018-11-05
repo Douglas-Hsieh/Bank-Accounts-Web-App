@@ -44,3 +44,12 @@ class InternalTransferForm(forms.Form):
     to_account = forms.IntegerField()
     balance = forms.IntegerField()
 
+
+class ExternalTransferForm(forms.Form):
+    """
+    Form for making an external transfer between Accounts
+    """
+    from_account = forms.IntegerField()
+    payee = forms.IntegerField()
+    amount = forms.IntegerField()
+    comment = forms.CharField(max_length=500)
