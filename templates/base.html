@@ -5,8 +5,16 @@
     <title>{% block title %}untitled{% endblock %}</title>
 </head>
 <body>
-    {% if message %}
+    {% if message %}  {# My custom message #}
         <i>{{ message }}</i>
+    {% endif %}
+
+    {% if messages %} {# django.contrib messages #}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
     {% endif %}
 
     <ul class="sidebar-nav">

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Payment History
+{% endblock %}
+
+{% block content %}
+    <p>Payment History:</p>
+    {% if receipts %}
+        {% for receipt in receipts %}
+            <p>{{ receipt.date }}<br>
+            ${{ receipt.amount }} sent
+                {# If Accounts exists, link to it #}
+                {% if receipt.from_account.id and receipt.to_account.id %}
+                    from
+                    <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>
+                    to
+                    <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>
+                {% elif receipt.from_account.id %}
+                    from
+                    <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>
+                    to
+                    Deleted Account
+                {% elif receipt.to_account.id %}
+                    from
+                    Deleted Account
+                    to
+                    <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>
+                {% else %}
+                    from
+                    Deleted Account
+                    to
+                    Deleted Account
+                {% endif %}
+                {# Else, do not list the transaction #}
+
+        {% endfor %}
+    {% else %}
+        <p>Nothing as of yet!</p>
+    {% endif %}
+{% endblock %}

@@ -11,8 +11,13 @@ Accounts Home
         <p><a href={% url 'bank_accounts:internal_transfer' %}>Make an internal transfer</a></p>
         <p><a href={% url 'bank_accounts:external_transfer' %}>Make a payment</a></p>
         <p><a href={% url 'bank_accounts:internal_transfer_receipt_list' %}>View your history of internal transfers</a></p>
-        <p><a href={% url 'bank_accounts:create' %}>Create a new bank account</a></p>
+        <p><a href={% url 'bank_accounts:external_transfer_receipt_list' %}>View your history of payments</a></p>
+<p><a href={% url 'bank_accounts:create' %}>Create a new bank account</a></p>
     {% endif %}
+
+
+
+
 
 {#    <a href={% url 'bank_accounts:create_raw' %}>Create an account with raw HTML</a> <br>#}
 {#  Custom drop down menu form  #}

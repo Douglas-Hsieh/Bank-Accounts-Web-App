@@ -3,7 +3,7 @@ from django.utils import timezone
 
 # Create your views here.
 
-from .models import Account, InternalTransferReceipt
+from .models import Account, InternalTransferReceipt, ExternalTransferReceipt
 from django.contrib.auth.models import User
 
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, Http404
@@ -23,6 +23,8 @@ from django.contrib.auth.decorators import login_required  # Use for function ba
 
 from django.contrib.auth.mixins import LoginRequiredMixin  # Use for class based views
 # class MyView(LoginRequiredMixin, View):
+
+from django.contrib import messages
 
 
 @login_required
@@ -345,7 +347,6 @@ def internal_transfer_view(request):
 #             return render(request, 'bank_accounts/internal_transfer.html', context)
 
 
-# TODO: View internal transfer history
 class InternalTransferReceiptList(LoginRequiredMixin, ListView):
     """
     Displays a history of internal transfers.
@@ -358,11 +359,6 @@ class InternalTransferReceiptList(LoginRequiredMixin, ListView):
         return InternalTransferReceipt.objects.filter(user=self.request.user)
 
 
-# def internal_transfer_receipt_list_view(request):
-#     pass
-
-
-# TODO: External Transfer
 @login_required
 def external_transfer_view(request):
     """
@@ -386,42 +382,101 @@ def external_transfer_view(request):
         return render(request, 'bank_accounts/external_transfer.html', {'from_accounts': from_accounts,
                                                                         'users': users})
     elif request.method == 'POST':  # User submits form
-        # Process Form
         form = ExternalTransferForm(request.POST)
+        print(form)
         if form.is_valid():
+
+            print('valid')
+            # Use form data to get relevant database objects
             try:
                 from_account = Account.objects.get(pk=form.cleaned_data['from_account'])
             except Account.DoesNotExist:
-                pass
+                messages.add_message(request, messages.ERROR,
+                                     'The account you are making the payment from does not exist.')
+                return redirect(to=reverse('bank_accounts:home'))
+
             try:
                 payee = User.objects.get(pk=form.cleaned_data['payee'])
             except User.DoesNotExist:
-                pass
+                messages.add_message(request, messages.ERROR,
+                                     'The user you are making the payment to does not exist.')
+                return redirect(to=reverse('bank_accounts:home'))
+
+            try:
+                payee_accounts = Account.objects.filter(holder=payee.pk)
+            except Account.DoesNotExist:
+                messages.add_message(request, messages.ERROR,
+                                     'The user you are making the payment to does not have any accounts.')
+                return redirect(to=reverse('bank_accounts:home'))
+
+            to_account = None
+            # for account in payee.account_set:
+            for account in payee_accounts:  # For each user account
+                if account.account_type == Account.CHECKING:
+                    to_account = account
+                    break
+            if to_account is None:
+                messages.add_message(request, messages.ERROR,
+                                     'The user you are making the payment to does not have a checking account.')
+                return redirect(to=reverse('bank_accounts:home'))
+
             amount = form.cleaned_data['amount']
 
-            # Business Logic
-            if amount > from_account.balance:  # Not enough funds
-                pass
-            if amount <= 0:  # Non-positive amount
-                pass
-            if request.user == payee:  # Payee is User himself
-                pass
-            if from_account.account_type != Account.CHECKING:  # from account is not a Checking Account
-                pass
-            # payee does not have a Checking Account
+            comment = form.cleaned_data['comment']
 
+            # Check valid payment
+            if amount > from_account.balance:  # Not enough funds
+                messages.add_message(request, messages.ERROR, 'Not enough funds.')
+                return redirect(to=reverse('bank_accounts:home'))
+            if amount <= 0:  # Non-positive amount
+                messages.add_message(request, messages.ERROR, 'You must select a positive amount.')
+                return redirect(to=reverse('bank_accounts:home'))
+            if request.user == payee:  # Payee is User himself
+                messages.add_message(request, messages.ERROR, 'You cannot pay yourself.')
+                return redirect(to=reverse('bank_accounts:home'))
+            if from_account.account_type != Account.CHECKING:  # from account is not a Checking Account
+                messages.add_message(request, messages.ERROR, 'You must make a payment from a checking account.')
+                return redirect(to=reverse('bank_accounts:home'))
+
+            # Perform transfer
+            # TODO: Worry about atomicity of transaction
+            from_account.withdraw(amount)
+            to_account.deposit(amount)
+
+            # Save receipt
+            ExternalTransferReceipt.objects.create(payer=request.user,
+                                                   payee=payee,
+                                                   from_account=from_account,
+                                                   to_account=to_account,
+                                                   comment=comment,
+                                                   amount=amount)
+
+            messages.add_message(request, messages.SUCCESS, 'Payment successful.')
             return redirect(reverse('bank_accounts:home'))
         else:  # Invalid form
+            messages.add_message(request, messages.ERROR, 'Invalid form.')
             return redirect(reverse('bank_accounts:home'))
     else:  # User makes some other request
         # Treat it as GET request
+        messages.add_message(request, messages.ERROR, 'Unrecognized request.')
         return render(request, 'bank_accounts/external_transfer.html', {'from_accounts': from_accounts,
                                                                         'users': users})
 
 
+class ExternalTransferReceiptList(LoginRequiredMixin, ListView):
+    """
+    Displays a history of external transfers.
+    """
+    template_name = 'bank_accounts/external_transfer_receipt_list.html'
+    model = ExternalTransferReceipt
+    context_object_name = 'receipts'
 
-# TODO: Hosting on Heroku/Firebase
+    def get_queryset(self):  # Get the list of model instances we can display
+        return ExternalTransferReceipt.objects.filter(payer=self.request.user) |\
+               ExternalTransferReceipt.objects.filter(payee=self.request.user)
+
+
+# TODO: Learn Django Concurrency
 
 
 
-# Figure out Django Concurrency

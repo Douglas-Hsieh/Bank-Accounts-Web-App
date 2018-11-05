@@ -52,4 +52,4 @@ class ExternalTransferForm(forms.Form):
     from_account = forms.IntegerField()
     payee = forms.IntegerField()
     amount = forms.IntegerField()
-    comment = forms.CharField(max_length=500)
+    comment = forms.CharField(max_length=500, required=False)

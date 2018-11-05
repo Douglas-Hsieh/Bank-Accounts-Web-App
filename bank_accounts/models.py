@@ -22,6 +22,13 @@ from .exceptions import InsufficientFunds
 # Choices are enforced by Django's form validation
 # Default widget is a check box with these choices instead of text field
 
+# Permissions:
+# Permission models store information associating users/groups to permissions
+# class Meta:
+#     permissions = (
+#         ("is_updating_own_account", "Update an Account that the User holds")
+#     )
+
 
 class Account(models.Model):
     """
@@ -71,24 +78,37 @@ class InternalTransferReceipt(models.Model):
     Each instance is a set of information associated with a successful internal transfer.
     """
 
-    user = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True)  # User that made the transfer. Anonymous if no User.
-    from_account = models.ForeignKey(to=Account, on_delete=models.SET_NULL, null=True, related_name='from_account')
-    to_account = models.ForeignKey(to=Account, on_delete=models.SET_NULL, null=True, related_name='to_account')
+    user = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True)  # User that made the transfer
+    from_account = models.ForeignKey(to=Account, on_delete=models.SET_NULL, null=True,
+                                     related_name='internaltransferreceipt_from_account')
+    to_account = models.ForeignKey(to=Account, on_delete=models.SET_NULL, null=True,
+                                   related_name='internaltransferreceipt_to_account')
     amount = models.IntegerField()
-    date = models.DateTimeField(default=timezone.now)  # Date of transfer
+    date = models.DateTimeField(default=timezone.now)  # date of transfer
     # comment = models.CharField(max_length=500)  # User comments on nature of transfer
 
     def __str__(self):
         return str(self.id)
 
 
+class ExternalTransferReceipt(models.Model):
+    """
+    Each instance is a set of information associated with a successful external transfer.
+    """
+    payer = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True,
+                              related_name='externaltransferreceipt_payer')
+    payee = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True,
+                              related_name='externaltransferreceipt_payee')
+    from_account = models.ForeignKey(to=Account, on_delete=models.SET_NULL, null=True,
+                                     related_name='externaltransferreceipt_from_account')
+    to_account = models.ForeignKey(to=Account, on_delete=models.SET_NULL, null=True,
+                                   related_name='externaltransferreceipt_to_account')
+    amount = models.IntegerField()
+    date = models.DateTimeField(default=timezone.now)  # date of transfer
+    comment = models.CharField(max_length=500)  # User comment on nature of transfer
 
+    def __str__(self):
+        return str(self.id)
 
-    # Permissions:
-    # Permission models store information associating users/groups to permissions
-    # class Meta:
-    #     permissions = (
-    #         ("is_updating_own_account", "Update an Account that the User holds")
-    #     )
 
 
