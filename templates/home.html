@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Douglas Hsieh
+{% endblock title %}
+
+{% block content %}
+    Hi, welcome to Douglas Hsieh's site!
+
+    <p>Here are some app(s) I've made:</p>
+    <ul>
+        <li><a href="{% url 'bank_accounts:home' %}">Bank Accounts</a></li>
+    </ul>
+
+{% endblock %}

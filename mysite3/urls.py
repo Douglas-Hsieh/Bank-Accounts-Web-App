@@ -16,8 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from bank_accounts.views import UserCreateView
+from .views import home_view
 
 urlpatterns = [
+    path('', home_view, name='home'),
     path('admin/', admin.site.urls),
     path('bank_accounts/', include('bank_accounts.urls')),
     path('accounts/', include('django.contrib.auth.urls')),

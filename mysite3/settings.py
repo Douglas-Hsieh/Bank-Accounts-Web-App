@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 import django_heroku
+from django.shortcuts import reverse
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -127,6 +128,9 @@ STATIC_URL = '/static/'
 # Redirection upon a successful login
 LOGIN_REDIRECT_URL = '/'
 
+# Redirection upon a successful logout
+LOGOUT_REDIRECT_URL = ''
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # django-nose
@@ -136,5 +140,5 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 
-# Activate Django-Heroku
+# Activate Django-Heroku (needed to tell Heroku to use its own database)
 django_heroku.settings(locals())

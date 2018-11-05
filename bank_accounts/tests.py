@@ -37,7 +37,7 @@ class HomeViewTests(TestCase):
         Title of the page is correct.
         :return:
         """
-        response = self.client.get(reverse('bank_accounts:home'))
+        response = self.client.get(reverse('bank accounts home'))
         self.assertIs(response.status_code, 200)
         self.assertContains(response, '<title>\nAccounts Home\n</title>')
 
@@ -518,14 +518,28 @@ class InternalTransferReceiptListViewTests(TestCase):
     # TODO Arexis found a bug
     def test_deleted_account(self):
         """
-        If a User deletes a
+        If a User deletes account, then internal transfer list view still works.
         :return:
         """
+        url = reverse('bank_accounts:internal_transfer_receipt_list')
+
         # Create User and Accounts
         user = create_user('username', 'password')
         account_1 = create_account(holder=user, balance=100)
         account_2 = create_account(holder=user, balance=100)
 
+        # Login
+        self.client.login(username='username', password='password')
+
+        # Internal Transfer
+        self.client.post(path=reverse('bank_accounts:internal_transfer'), data={
+            'from_account': account_1.pk,
+            'to_account': account_2.pk,
+            'balance': 100})
+
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)  # OK
 
 
 def create_user(username='username', password='password'):

@@ -31,7 +31,7 @@ def home_view(request):
     :param request:
     :return:
     """
-    return render(request, 'home.html')
+    return render(request, 'bank_accounts/home.html')
 
 
 class UserCreateView(CreateView):  # CreateView indicates creation of object in database (using forms)
@@ -242,7 +242,7 @@ def internal_transfer_view(request):
     accounts = Account.objects.filter(holder=request.user)
 
     if not accounts:  # User has no Accounts
-        return render(request, 'home.html', {'message': 'Error: No Accounts to transfer between.'})
+        return render(request, 'bank_accounts/home.html', {'message': 'Error: No Accounts to transfer between.'})
 
     if request.method == 'POST':  # User submitted form
         # Process form

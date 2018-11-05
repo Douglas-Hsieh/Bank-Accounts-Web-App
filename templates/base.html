@@ -15,7 +15,7 @@
             <p>Logged in as: {{ user.username }}</p>
         {% endif %}
 
-        <p><a href="/bank_accounts">Home</a></p>
+        <p><a href="{% url 'home' %}">Home</a></p>
 
         {% if user.is_authenticated %}
             {# User may logout #}
@@ -24,6 +24,9 @@
         {% else %}
             {# User may login #}
             <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a></p>
+            {# User may register #}
+            <p><a href={% url 'signup' %}>New User? Create a User account</a></p>
+
         {% endif %}
     </ul>
 

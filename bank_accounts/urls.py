@@ -11,7 +11,7 @@ from django.urls import path
 from bank_accounts.views import home_view, AccountCreateView, AccountListView,\
     account_detail_view, account_update_view, account_delete_view, internal_transfer_view, InternalTransferReceiptList
 
-app_name = 'bank_accounts'  # URL Namespace
+app_name = 'bank_accounts'  # URL Namespace (to distinguish view names such as 'home' and 'bank_accounts:home')
 urlpatterns = [
     path('', home_view, name='home'),
     path('create/', AccountCreateView.as_view(), name='create'),
