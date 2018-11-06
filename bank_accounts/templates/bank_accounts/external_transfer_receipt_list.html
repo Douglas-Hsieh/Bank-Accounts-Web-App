@@ -5,12 +5,16 @@
 {% endblock %}
 
 {% block content %}
+
     <p>Payment History:</p>
+
     {% if receipts %}
+
         {% for receipt in receipts %}
             <p>{{ receipt.date }}<br>
             ${{ receipt.amount }} sent
-                {# If Accounts exists, link to it #}
+
+            {# If Accounts exists, link to it #}
                 {% if receipt.from_account.id and receipt.to_account.id %}
                     from
                     <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>
@@ -32,10 +36,95 @@
                     to
                     Deleted Account
                 {% endif %}
-                {# Else, do not list the transaction #}
 
+            <br>
+
+            {% if receipt.comment %} {# Comment exists #}
+                Comment: {{ receipt.comment }}
+            {% endif %}
+
+            <br>
         {% endfor %}
+
     {% else %}
         <p>Nothing as of yet!</p>
     {% endif %}
+
 {% endblock %}
+
+
+
+
+
+
+
+{# MESS 2 #}
+         {# If payer, payee, from_account, to_account exist #}
+{#            {% if receipt.payer and receipt.payee and receipt.from_account and receipt.to_account %}#}
+{##}
+                {# If user is payer #}
+{#                {% if request.user == receipt.from_account.holder %}#}
+{#                    #}
+                {# If user is payee #}
+{#                {% elif request.user == receipt.to_account.holder %}#}
+{##}
+{#                {% endif %}#}
+{##}
+{#            {% endif %}#}
+
+
+
+
+
+
+{# MESS 1 #}
+
+{# If payer is you, reference Account. Else display name. If payee is you, reference Account. Else display name #}
+
+                {# If Accounts exists, link to it #}
+{#                {% if receipt.from_account.id and receipt.to_account.id %} {# Both the from account and to account exist #}
+{##}
+{#                    {% if request.user.id == receipt.from_account.holder %} {# User sent a payment #}
+{#                        from#}
+{#                        <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>#}
+{#                        to#}
+{#                        {% if receipt.payee %} {# If payee exists #}
+{#                            {{ receipt.payee }}#}
+{#                        {% endif %}#}
+{##}
+{#                    {% else %}  {# User received a payment #}
+{#                        from#}
+{#                        {{ receipt.payer }}#}
+{#                        to#}
+{#                        <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>                    {% endif %}#}
+{##}
+{#                {% elif receipt.from_account.id %}  {# from account exists, but to account doesn't exist #}
+{##}
+{#                    {% if request.user.id == receipt.from_account.holder %} {# User sent a payment #}
+{#                        from#}
+{#                        <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>#}
+{#                        to#}
+{#                        {% if receipt.payee.id %} {# If payee exists #}
+{#                            {{ receipt.payee }}#}
+{#                        {% else %}#}
+{##}
+{#                    {% else %}  {# User received a payment  #}
+{##}
+{#                    {% endif %}#}
+{##}
+{#                    from#}
+{#                    <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>#}
+{#                    to#}
+{#                    Deleted User#}
+{#                {% elif receipt.payee.id %}#}
+{#                    from#}
+{#                    Deleted Account#}
+{#                    to#}
+{#                    {{ receipt.payee }}#}
+{#                {% else %}#}
+{#                    from#}
+{#                    Deleted Account#}
+{#                    to#}
+{#                    Deleted User#}
+{#                {% endif %}#}
+                {# Else, do not list the transaction #}
