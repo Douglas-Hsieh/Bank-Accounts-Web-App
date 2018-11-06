@@ -14,28 +14,81 @@
             <p>{{ receipt.date }}<br>
             ${{ receipt.amount }} sent
 
+
+            {% if request.user == receipt.payer %}  {# User is payer #}
+    {% if receipt.from_account and receipt.payee %}
+        from
+        <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>
+        to
+        {{ receipt.payee }}
+    {% elif receipt.from_account %}
+        from
+        <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>
+        to
+        Deleted User
+    {% elif receipt.payee %}
+        from
+        Deleted Account
+        to
+        {{ receipt.payee }}
+    {% else %}
+        from
+        Deleted Account
+        to
+        Deleted User
+    {% endif %}
+{% else %}  {# User is payee #}
+    {% if receipt.payer and receipt.to_account %}
+        from
+        {{ receipt.payer }}
+        to
+        <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>
+    {% elif receipt.to_account %}
+        from
+        Deleted User
+        to
+        <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>
+    {% elif receipt.payer %}
+        from
+        {{ receipt.payer }}
+        to
+        Deleted Account
+    {% else %}
+        from
+        Deleted User
+        to
+        Deleted Account
+    {% endif %}
+{% endif %} {# In the case that User does not exist, then we cannot view his transaction history anyways #}
+
+
+
+
+
             {# If Accounts exists, link to it #}
-                {% if receipt.from_account.id and receipt.to_account.id %}
-                    from
-                    <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>
-                    to
-                    <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>
-                {% elif receipt.from_account.id %}
-                    from
-                    <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>
-                    to
-                    Deleted Account
-                {% elif receipt.to_account.id %}
-                    from
-                    Deleted Account
-                    to
-                    <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>
-                {% else %}
-                    from
-                    Deleted Account
-                    to
-                    Deleted Account
-                {% endif %}
+{#                {% if receipt.from_account.id and receipt.to_account.id %}#}
+{#                    from#}
+{#                    <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>#}
+{#                    to#}
+{#                    <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>#}
+{#                {% elif receipt.from_account.id %}#}
+{#                    from#}
+{#                    <a href="{% url 'bank_accounts:account_detail' receipt.from_account.id %}">{{ receipt.from_account }}</a>#}
+{#                    to#}
+{#                    Deleted Account#}
+{#                {% elif receipt.to_account.id %}#}
+{#                    from#}
+{#                    Deleted Account#}
+{#                    to#}
+{#                    <a href="{% url 'bank_accounts:account_detail' receipt.to_account.id %}">{{ receipt.to_account }}</a>#}
+{#                {% else %}#}
+{#                    from#}
+{#                    Deleted Account#}
+{#                    to#}
+{#                    Deleted Account#}
+{#                {% endif %}#}
+
+
 
             <br>
 
@@ -57,20 +110,6 @@
 
 
 
-
-{# MESS 2 #}
-         {# If payer, payee, from_account, to_account exist #}
-{#            {% if receipt.payer and receipt.payee and receipt.from_account and receipt.to_account %}#}
-{##}
-                {# If user is payer #}
-{#                {% if request.user == receipt.from_account.holder %}#}
-{#                    #}
-                {# If user is payee #}
-{#                {% elif request.user == receipt.to_account.holder %}#}
-{##}
-{#                {% endif %}#}
-{##}
-{#            {% endif %}#}
 
 
 
