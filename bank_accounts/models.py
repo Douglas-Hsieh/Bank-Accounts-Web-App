@@ -45,10 +45,12 @@ class Account(models.Model):
     UCU = 'UCU'
     CHASE = 'Chase'
     WELLS_FARGO = 'Wells Fargo'
+    BANK_OF_AMERICA = 'Bank of America'
     BANK_CHOICES = (
         (UCU, 'UCU'),
         (CHASE, 'Chase'),
         (WELLS_FARGO, 'Wells Fargo'),
+        (BANK_OF_AMERICA, 'Bank of America'),
     )
 
     account_type = models.CharField(max_length=200, default=None, choices=ACCOUNT_TYPE_CHOICES)
